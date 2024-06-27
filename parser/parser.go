@@ -50,6 +50,9 @@ loop:
 		case BracketsOpen:
 			tok2 := p.nextRegularToken()
 			switch tok2.typ {
+			case BracketsClose:
+				// Empty object
+				value = struct{}{}
 			case BracketsOpen:
 				// Array of objects
 				x := make([]map[string]any, 0)
