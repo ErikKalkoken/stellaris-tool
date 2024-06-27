@@ -40,6 +40,7 @@ func TestParser(t *testing.T) {
 				"1": map[string]any{"charlie": 7}},
 			},
 		},
+		// {"alpha={}", map[string]any{"alpha": struct{}{}}},
 	}
 	for _, tc := range cases {
 		t.Run(fmt.Sprintf(tc.in), func(t *testing.T) {

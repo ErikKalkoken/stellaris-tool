@@ -49,7 +49,8 @@ loop:
 			value = tok.value
 		case BracketsOpen:
 			tok2 := p.nextRegularToken()
-			if tok2.typ == BracketsOpen {
+			switch tok2.typ {
+			case BracketsOpen:
 				// Array of objects
 				x := make([]map[string]any, 0)
 				for {
@@ -60,80 +61,81 @@ loop:
 					x = append(x, v2)
 					tok3 := p.nextRegularToken()
 					if tok3.typ == BracketsClose {
-						value = x
 						break
 					} else if tok3.typ != BracketsOpen {
 						return nil, p.makeError("Unexpected token %v in obj array", tok3)
 					}
 				}
-			} else {
-				// Array of value
-				switch tok2.typ {
-				case Identifier:
-					p.backup(tok2)
+				value = x
+			case Identifier:
+				// Normal object
+				p.backup(tok2)
+				x, err := p.Parse()
+				if err != nil {
+					return nil, err
+				}
+				value = x
+			case Integer:
+				tok3 := p.nextRegularToken()
+				p.backup(tok3)
+				p.backup(tok2)
+				if tok3.typ == EqualSign {
+					// ID object
 					x, err := p.Parse()
 					if err != nil {
 						return nil, err
 					}
 					value = x
-				case Integer:
+					break
+				}
+				// Array of integer
+				x := make([]int, 0)
+				for {
 					tok3 := p.nextRegularToken()
-					p.backup(tok3)
-					p.backup(tok2)
-					if tok3.typ == EqualSign {
-						x, err := p.Parse()
-						if err != nil {
-							return nil, err
-						}
+					if tok3.typ == BracketsClose {
 						value = x
 						break
 					}
-					x := make([]int, 0)
-					for {
-						tok3 := p.nextRegularToken()
-						if tok3.typ == BracketsClose {
-							value = x
-							break
-						}
-						y, ok := tok3.value.(int)
-						if !ok {
-							return nil, p.makeError("Expected type integer, but got: %v", tok3)
-						}
-						x = append(x, y)
+					y, ok := tok3.value.(int)
+					if !ok {
+						return nil, p.makeError("Expected type integer, but got: %v", tok3)
 					}
-				case Float:
-					p.backup(tok2)
-					x := make([]float64, 0)
-					for {
-						tok3 := p.nextRegularToken()
-						if tok3.typ == BracketsClose {
-							value = x
-							break
-						}
-						y, ok := tok3.value.(float64)
-						if !ok {
-							return nil, p.makeError("Expected type float, but got: %v", tok2)
-						}
-						x = append(x, y)
-					}
-				case String:
-					p.backup(tok2)
-					x := make([]string, 0)
-					for {
-						tok3 := p.nextRegularToken()
-						if tok3.typ == BracketsClose {
-							value = x
-							break
-						}
-						y, ok := tok3.value.(string)
-						if !ok {
-							return nil, p.makeError("Expected type string, but got: %v", tok3)
-						}
-						x = append(x, y)
-					}
-				default:
-					return nil, p.makeError("invalid token %v for array", tok2)
+					x = append(x, y)
 				}
+			case Float:
+				// Array of float
+				p.backup(tok2)
+				x := make([]float64, 0)
+				for {
+					tok3 := p.nextRegularToken()
+					if tok3.typ == BracketsClose {
+						value = x
+						break
+					}
+					y, ok := tok3.value.(float64)
+					if !ok {
+						return nil, p.makeError("Expected type float, but got: %v", tok2)
+					}
+					x = append(x, y)
+				}
+			case String:
+				// Array of string
+				p.backup(tok2)
+				x := make([]string, 0)
+				for {
+					tok3 := p.nextRegularToken()
+					if tok3.typ == BracketsClose {
+						value = x
+						break
+					}
+					y, ok := tok3.value.(string)
+					if !ok {
+						return nil, p.makeError("Expected type string, but got: %v", tok3)
+					}
+					x = append(x, y)
+				}
+			default:
+				return nil, p.makeError("invalid token %v for array", tok2)
 			}
 
 		default:
