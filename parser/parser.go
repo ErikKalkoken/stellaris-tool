@@ -27,7 +27,7 @@ loop:
 		var value any
 
 		// First token should be identifier or integer
-		switch tok := p.scanIgnoreWhitespace(); tok.typ {
+		switch tok := p.nextRegularToken(); tok.typ {
 		case Eof, BracketsClose:
 			break loop
 		case Identifier:
@@ -39,16 +39,16 @@ loop:
 		}
 
 		// Next should be an equal sign
-		if tok := p.scanIgnoreWhitespace(); tok.typ != Equal {
+		if tok := p.nextRegularToken(); tok.typ != Equal {
 			return nil, p.makeError("found %v, expected equal sign", tok)
 		}
 
 		// Next should be some kind of value
-		switch tok := p.scanIgnoreWhitespace(); tok.typ {
+		switch tok := p.nextRegularToken(); tok.typ {
 		case String, Float, Integer, Boolean:
 			value = tok.value
 		case BracketsOpen:
-			tok2 := p.scanIgnoreWhitespace()
+			tok2 := p.nextRegularToken()
 			if tok2.typ == BracketsOpen {
 				// Array of objects
 				x := make([]map[string]any, 0)
@@ -58,7 +58,7 @@ loop:
 						return nil, err
 					}
 					x = append(x, v2)
-					tok3 := p.scanIgnoreWhitespace()
+					tok3 := p.nextRegularToken()
 					if tok3.typ == BracketsClose {
 						value = x
 						break
@@ -80,7 +80,7 @@ loop:
 					p.backup(tok2)
 					x := make([]int, 0)
 					for {
-						tok3 := p.scanIgnoreWhitespace()
+						tok3 := p.nextRegularToken()
 						if tok3.typ == BracketsClose {
 							value = x
 							break
@@ -95,7 +95,7 @@ loop:
 					p.backup(tok2)
 					x := make([]float64, 0)
 					for {
-						tok3 := p.scanIgnoreWhitespace()
+						tok3 := p.nextRegularToken()
 						if tok3.typ == BracketsClose {
 							value = x
 							break
@@ -110,7 +110,7 @@ loop:
 					p.backup(tok2)
 					x := make([]string, 0)
 					for {
-						tok3 := p.scanIgnoreWhitespace()
+						tok3 := p.nextRegularToken()
 						if tok3.typ == BracketsClose {
 							value = x
 							break
@@ -134,18 +134,18 @@ loop:
 	return x, nil
 }
 
-// scanIgnoreWhitespace scans the next non-whitespace token.
-func (p *Parser) scanIgnoreWhitespace() Token {
-	token := p.scan()
+// nextRegularToken return the next non-whitespace token
+func (p *Parser) nextRegularToken() Token {
+	token := p.nextToken()
 	if token.typ == Whitespace {
-		return p.scan()
+		return p.nextToken()
 	}
 	return token
 }
 
-// scan returns the next token from the underlying scanner.
+// nextToken returns the next token from the underlying scanner.
 // If a token has been unscanned then read that instead.
-func (p *Parser) scan() Token {
+func (p *Parser) nextToken() Token {
 	// If we have a token on the buffer, then return it.
 	if !p.ts.isEmpty() {
 		token, err := p.ts.pop()
