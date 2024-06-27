@@ -20,7 +20,7 @@ type Parser struct {
 
 // NewParser returns a new instance of Parser.
 func NewParser(r io.Reader) *Parser {
-	return &Parser{l: NewScanner(r)}
+	return &Parser{l: NewLexer(r)}
 }
 func (p *Parser) Parse() (map[string]any, error) {
 	x := make(map[string]any)
@@ -39,12 +39,12 @@ loop:
 		case Integer:
 			key = strconv.Itoa(v.(int))
 		default:
-			return nil, fmt.Errorf("found %v, expected identifier or integer", v)
+			return nil, p.makeError("found %v, expected identifier or integer", v)
 		}
 
 		// Next should be an equal sign
 		if tok, lit := p.scanIgnoreWhitespace(); tok != Equal {
-			return nil, fmt.Errorf("found %v, expected equal sign", lit)
+			return nil, p.makeError("found %v, expected equal sign", lit)
 		}
 
 		// Next should be some kind of value
@@ -82,11 +82,11 @@ loop:
 					x = append(x, v.(string))
 				}
 			default:
-				return nil, fmt.Errorf("invalid token %v for array", v)
+				return nil, p.makeError("invalid token %v for array", v)
 			}
 
 		default:
-			return nil, fmt.Errorf("found %v, expected a value", v)
+			return nil, p.makeError("found %v, expected a value", v)
 		}
 		x[key] = value
 	}
@@ -123,4 +123,9 @@ func (p *Parser) scan() (tok Token, value any) {
 // unscan pushes the previously read token back onto the buffer.
 func (p *Parser) unscan() {
 	p.buf.n = 1
+}
+
+func (p *Parser) makeError(format string, a ...any) error {
+	s := fmt.Sprintf(format, a...)
+	return fmt.Errorf("%s in line %d", s, p.l.loc)
 }

@@ -40,7 +40,7 @@ func TestParser(t *testing.T) {
 }
 
 func TestParserFull(t *testing.T) {
-	f, err := os.Open("testdata/meta")
+	f, err := os.Open("testdata/example")
 	if err != nil {
 		panic(err)
 	}
@@ -52,7 +52,7 @@ func TestParserFull(t *testing.T) {
 		if err != nil {
 			panic(err)
 		}
-		if err := os.WriteFile("testdata/meta.json", y, 0644); err != nil {
+		if err := os.WriteFile("testdata/example.json", y, 0644); err != nil {
 			panic(err)
 		}
 	}

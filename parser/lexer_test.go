@@ -33,7 +33,7 @@ func TestSingleTokens(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(fmt.Sprintf("in: %s", tc.in), func(t *testing.T) {
 			in := strings.NewReader(tc.in)
-			l := parser.NewScanner(in)
+			l := parser.NewLexer(in)
 			token, lit := l.Lex()
 			got := result{token: token, value: lit}
 			assert.Equal(t, tc.want, got)
@@ -74,7 +74,7 @@ func TestMultipleTokens(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(fmt.Sprintf("in: %s", tc.in), func(t *testing.T) {
 			in := strings.NewReader(tc.in)
-			s := parser.NewScanner(in)
+			s := parser.NewLexer(in)
 			got := make([]parser.Token, 0)
 			for {
 				token, _ := s.Lex()

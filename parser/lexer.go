@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"io"
 	"strconv"
+	"strings"
 	"unicode"
 )
 
@@ -28,21 +29,20 @@ var eof = rune(0)
 
 // Lexer represents a lexical scanner.
 type Lexer struct {
-	r *bufio.Reader
+	r   *bufio.Reader
+	loc int
 }
 
-// NewScanner returns a new instance of Scanner.
-func NewScanner(r io.Reader) *Lexer {
-	return &Lexer{r: bufio.NewReader(r)}
+// NewLexer returns a new instance of lexer
+func NewLexer(r io.Reader) *Lexer {
+	return &Lexer{r: bufio.NewReader(r), loc: 1}
 }
 
 // Lex returns the next token and literal value.
-func (l *Lexer) Lex() (tok Token, value any) {
+func (l *Lexer) Lex() (Token, any) {
 	// Read the next rune.
 	ch := l.read()
 
-	// If we see whitespace then consume all contiguous whitespace.
-	// If we see a letter then consume as an ident or reserved word.
 	if unicode.IsSpace(ch) {
 		l.unread()
 		return l.scanWhitespace()
@@ -56,7 +56,6 @@ func (l *Lexer) Lex() (tok Token, value any) {
 		return l.scanNumber()
 	}
 
-	// Otherwise read the individual character.
 	switch ch {
 	case eof:
 		return Eof, ""
@@ -86,14 +85,12 @@ func (l *Lexer) unread() {
 	_ = l.r.UnreadRune()
 }
 
-// scanWhitespace consumes the current rune and all contiguous whitespace.
+// scanWhitespace identifies a whitespace token, which can contain multiple continuous whitespace runes.
+// It also updates the current line number.
 func (l *Lexer) scanWhitespace() (tok Token, value any) {
-	// Create a buffer and read the current character into it.
 	var buf bytes.Buffer
 	buf.WriteRune(l.read())
 
-	// Read every subsequent whitespace character into the buffer.
-	// Non-whitespace characters and EOF will cause the loop to exit.
 	for {
 		if ch := l.read(); ch == eof {
 			break
@@ -105,17 +102,17 @@ func (l *Lexer) scanWhitespace() (tok Token, value any) {
 		}
 	}
 
-	return Whitespace, buf.String()
+	s := buf.String()
+	l.loc += strings.Count(s, "\n")
+	return Whitespace, s
 }
 
-// scanWord consumes the current rune and all contiguous ident runes.
+// scanWord identifiers a word, which can be an identifier or a keyword.
 func (l *Lexer) scanWord() (tok Token, value any) {
-	// Create a buffer and read the current character into it.
 	var buf bytes.Buffer
 	buf.WriteRune(l.read())
 
-	// Read every subsequent ident character into the buffer.
-	// Non-ident characters and EOF will cause the loop to exit.
+	// Read word from stream
 	for {
 		if ch := l.read(); ch == eof {
 			break
@@ -126,7 +123,7 @@ func (l *Lexer) scanWord() (tok Token, value any) {
 			_, _ = buf.WriteRune(ch)
 		}
 	}
-	// If the string matches a keyword then return that keyword.
+	// If the word matches a keyword then return that that token.
 	s := buf.String()
 	switch s {
 	case "yes":
@@ -134,12 +131,11 @@ func (l *Lexer) scanWord() (tok Token, value any) {
 	case "no":
 		return Boolean, false
 	}
-
-	// Otherwise return as a regular identifier.
+	// Otherwise return as a identifier.
 	return Identifier, s
 }
 
-// scanWord consumes the current rune and all contiguous ident runes.
+// scanWord identifies a string token.
 func (l *Lexer) scanString() (tok Token, value string) {
 	// Create a buffer and read the current character into it.
 	var buf bytes.Buffer
@@ -157,7 +153,7 @@ func (l *Lexer) scanString() (tok Token, value string) {
 	return String, buf.String()
 }
 
-// scanWord consumes the current rune and all contiguous ident runes.
+// scanNumber identifiers a number type token.
 func (l *Lexer) scanNumber() (tok Token, value any) {
 	// Create a buffer and read the current character into it.
 	var buf bytes.Buffer

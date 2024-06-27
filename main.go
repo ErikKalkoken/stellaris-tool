@@ -1,7 +1,29 @@
 package main
 
-func main() {
+import (
+	"encoding/json"
+	"example/stellaris-tool/parser"
+	"os"
+)
 
+func main() {
+	f, err := os.Open(".temp/gamestate")
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+	p := parser.NewParser(f)
+	x, err := p.Parse()
+	if err != nil {
+		panic(err)
+	}
+	y, err := json.MarshalIndent(x, "", "    ")
+	if err != nil {
+		panic(err)
+	}
+	if err := os.WriteFile(".temp/gamestate.json", y, 0644); err != nil {
+		panic(err)
+	}
 }
 
 // func loadSaveFile() {
