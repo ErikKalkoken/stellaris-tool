@@ -23,12 +23,12 @@ func TestSingleTokens(t *testing.T) {
 		{" ", token{whitespaceType, " "}},
 		{" 			 ", token{whitespaceType, " 			 "}},
 		{"#", token{illegalType, "#"}},
-		// keywords
+		// special words
 		{"yes", token{booleanType, true}},
 		{"no", token{booleanType, false}},
-		{"not_set", token{keywordType, NotSet}},
-		{"indeterminable", token{keywordType, Indeterminable}},
 		{"none", token{keywordType, None}},
+		{"not_set", token{keywordType, NotSet}},
+		{"indeterminable", token{identifierType, "indeterminable"}},
 	}
 	for _, tc := range cases {
 		t.Run(fmt.Sprintf("in: %s", tc.in), func(t *testing.T) {

@@ -45,7 +45,9 @@ func TestParser(t *testing.T) {
 		{"alpha={}", map[string]any{"alpha": struct{}{}}},
 		{"alpha=yes", map[string]any{"alpha": true}},
 		{"alpha=no", map[string]any{"alpha": false}},
-		{"alpha=indeterminable", map[string]any{"alpha": parser.Indeterminable}},
+		{"alpha=none", map[string]any{"alpha": parser.None}},
+		{"alpha=not_set", map[string]any{"alpha": parser.NotSet}},
+		{"alpha=male", map[string]any{"alpha": "male"}},
 	}
 	for _, tc := range cases {
 		t.Run(fmt.Sprintf(tc.in), func(t *testing.T) {

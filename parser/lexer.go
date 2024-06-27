@@ -116,12 +116,6 @@ func (l *Lexer) scanWord() token {
 		return token{booleanType, false}
 	case "not_set":
 		return token{keywordType, NotSet}
-	case "indeterminable":
-		return token{keywordType, Indeterminable}
-	case "male":
-		return token{keywordType, Male}
-	case "female":
-		return token{keywordType, Female}
 	case "none":
 		return token{keywordType, None}
 	}

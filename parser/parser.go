@@ -6,15 +6,12 @@ import (
 	"strconv"
 )
 
-type Keyword uint
+type Keyword string
 
-// Keywords
+// Special keywords
 const (
-	None Keyword = iota + 1
-	NotSet
-	Indeterminable
-	Male
-	Female
+	None   Keyword = "none"
+	NotSet Keyword = "not_set"
 )
 
 // Parser represents a parser.
@@ -56,7 +53,7 @@ loop:
 
 		// Next should be some kind of value
 		switch tok := p.nextRegularToken(); tok.typ {
-		case stringType, floatType, integerType, booleanType, keywordType:
+		case stringType, floatType, integerType, booleanType, keywordType, identifierType:
 			value = tok.value
 		case bracketsOpenType:
 			tok2 := p.nextRegularToken()
