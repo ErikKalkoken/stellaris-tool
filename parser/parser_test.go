@@ -21,6 +21,8 @@ func TestParser(t *testing.T) {
 		{"1=\"test\"", map[string]any{"1": "test"}},
 		{"alpha={5 6}", map[string]any{"alpha": []int{5, 6}}},
 		{"alpha={5.1 6.2}", map[string]any{"alpha": []float64{5.1, 6.2}}},
+		{"alpha={0 6.2}", map[string]any{"alpha": []float64{0, 6.2}}},
+		{"alpha={1 2}", map[string]any{"alpha": []int{1, 2}}},
 		{"alpha={\"first\" \"second\"}", map[string]any{"alpha": []string{"first", "second"}}},
 		{"alpha={bravo={1 2 3}}", map[string]any{"alpha": map[string]any{"bravo": []int{1, 2, 3}}}},
 		{"alpha={bravo=3}", map[string]any{"alpha": map[string]any{"bravo": 3}}},

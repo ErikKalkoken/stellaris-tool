@@ -1,20 +1,20 @@
 package parser
 
-type tokenType uint
+type tokenType string
 
 const (
-	illegalType tokenType = iota
-	eofType
-	whitespaceType
-	equalSignType
-	bracketsOpenType
-	bracketsCloseType
-	identifierType
-	stringType
-	floatType
-	integerType
-	booleanType
-	keywordType
+	illegalType       tokenType = "illegal"
+	eofType           tokenType = "eof"
+	whitespaceType    tokenType = "whitespace"
+	equalSignType     tokenType = "equalSign"
+	bracketsOpenType  tokenType = "bracketsOpen"
+	bracketsCloseType tokenType = "bracketsClose"
+	identifierType    tokenType = "identifier"
+	stringType        tokenType = "string"
+	floatType         tokenType = "float"
+	integerType       tokenType = "integer"
+	booleanType       tokenType = "boolean"
+	keywordType       tokenType = "keyword"
 )
 
 type token struct {
