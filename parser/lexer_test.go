@@ -10,8 +10,8 @@ import (
 )
 
 type result struct {
-	token   parser.Token
-	literal string
+	token parser.Token
+	value any
 }
 
 func TestSingleTokens(t *testing.T) {
@@ -21,9 +21,9 @@ func TestSingleTokens(t *testing.T) {
 	}{
 		{"name", result{parser.Identifier, "name"}},
 		{"\"string\"", result{parser.String, "string"}},
-		{"1.234", result{parser.Number, "1.234"}},
-		{"yes", result{parser.Yes, "yes"}},
-		{"no", result{parser.No, "no"}},
+		{"1.234", result{parser.Float, 1.234}},
+		{"yes", result{parser.Boolean, true}},
+		{"no", result{parser.Boolean, false}},
 		{"{", result{parser.BracketsOpen, "{"}},
 		{"}", result{parser.BracketsClose, "}"}},
 		{" ", result{parser.Whitespace, " "}},
@@ -33,9 +33,9 @@ func TestSingleTokens(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(fmt.Sprintf("in: %s", tc.in), func(t *testing.T) {
 			in := strings.NewReader(tc.in)
-			s := parser.NewScanner(in)
-			token, lit := s.Scan()
-			got := result{token: token, literal: lit}
+			l := parser.NewScanner(in)
+			token, lit := l.Lex()
+			got := result{token: token, value: lit}
 			assert.Equal(t, tc.want, got)
 		})
 	}
@@ -56,7 +56,7 @@ func TestMultipleTokens(t *testing.T) {
 		},
 		{
 			"yes no hello",
-			[]parser.Token{parser.Yes, parser.Whitespace, parser.No, parser.Whitespace, parser.Identifier},
+			[]parser.Token{parser.Boolean, parser.Whitespace, parser.Boolean, parser.Whitespace, parser.Identifier},
 		},
 		{
 			"first=\"second 123 $%&\"",
@@ -64,11 +64,11 @@ func TestMultipleTokens(t *testing.T) {
 		},
 		{
 			"first=123.45",
-			[]parser.Token{parser.Identifier, parser.Equal, parser.Number},
+			[]parser.Token{parser.Identifier, parser.Equal, parser.Float},
 		},
 		{
 			"first=123.45second=5",
-			[]parser.Token{parser.Identifier, parser.Equal, parser.Number, parser.Identifier, parser.Equal, parser.Number},
+			[]parser.Token{parser.Identifier, parser.Equal, parser.Float, parser.Identifier, parser.Equal, parser.Integer},
 		},
 	}
 	for _, tc := range cases {
@@ -77,7 +77,7 @@ func TestMultipleTokens(t *testing.T) {
 			s := parser.NewScanner(in)
 			got := make([]parser.Token, 0)
 			for {
-				token, _ := s.Scan()
+				token, _ := s.Lex()
 				if token == parser.Eof {
 					break
 				}

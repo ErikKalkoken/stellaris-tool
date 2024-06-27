@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"io"
+	"strconv"
 	"unicode"
 )
 
@@ -18,41 +19,41 @@ const (
 	BracketsClose
 	Identifier
 	String
-	Number
-	Yes
-	No
+	Float
+	Integer
+	Boolean
 )
 
 var eof = rune(0)
 
-// Scanner represents a lexical scanner.
-type Scanner struct {
+// Lexer represents a lexical scanner.
+type Lexer struct {
 	r *bufio.Reader
 }
 
 // NewScanner returns a new instance of Scanner.
-func NewScanner(r io.Reader) *Scanner {
-	return &Scanner{r: bufio.NewReader(r)}
+func NewScanner(r io.Reader) *Lexer {
+	return &Lexer{r: bufio.NewReader(r)}
 }
 
-// Scan returns the next token and literal value.
-func (s *Scanner) Scan() (tok Token, lit string) {
+// Lex returns the next token and literal value.
+func (l *Lexer) Lex() (tok Token, value any) {
 	// Read the next rune.
-	ch := s.read()
+	ch := l.read()
 
 	// If we see whitespace then consume all contiguous whitespace.
 	// If we see a letter then consume as an ident or reserved word.
 	if unicode.IsSpace(ch) {
-		s.unread()
-		return s.scanWhitespace()
+		l.unread()
+		return l.scanWhitespace()
 	} else if ch == '"' {
-		return s.scanString()
+		return l.scanString()
 	} else if unicode.IsLetter(ch) {
-		s.unread()
-		return s.scanWord()
+		l.unread()
+		return l.scanWord()
 	} else if unicode.IsDigit(ch) {
-		s.unread()
-		return s.scanNumber()
+		l.unread()
+		return l.scanNumber()
 	}
 
 	// Otherwise read the individual character.
@@ -72,8 +73,8 @@ func (s *Scanner) Scan() (tok Token, lit string) {
 
 // read reads the next rune from the buffered reader.
 // Returns the rune(0) if an error occurs (or io.EOF is returned).
-func (s *Scanner) read() rune {
-	ch, _, err := s.r.ReadRune()
+func (l *Lexer) read() rune {
+	ch, _, err := l.r.ReadRune()
 	if err != nil {
 		return eof
 	}
@@ -81,23 +82,23 @@ func (s *Scanner) read() rune {
 }
 
 // unread places the previously read rune back on the reader.
-func (s *Scanner) unread() {
-	_ = s.r.UnreadRune()
+func (l *Lexer) unread() {
+	_ = l.r.UnreadRune()
 }
 
 // scanWhitespace consumes the current rune and all contiguous whitespace.
-func (s *Scanner) scanWhitespace() (tok Token, lit string) {
+func (l *Lexer) scanWhitespace() (tok Token, value any) {
 	// Create a buffer and read the current character into it.
 	var buf bytes.Buffer
-	buf.WriteRune(s.read())
+	buf.WriteRune(l.read())
 
 	// Read every subsequent whitespace character into the buffer.
 	// Non-whitespace characters and EOF will cause the loop to exit.
 	for {
-		if ch := s.read(); ch == eof {
+		if ch := l.read(); ch == eof {
 			break
 		} else if !unicode.IsSpace(ch) {
-			s.unread()
+			l.unread()
 			break
 		} else {
 			buf.WriteRune(ch)
@@ -108,44 +109,44 @@ func (s *Scanner) scanWhitespace() (tok Token, lit string) {
 }
 
 // scanWord consumes the current rune and all contiguous ident runes.
-func (s *Scanner) scanWord() (tok Token, lit string) {
+func (l *Lexer) scanWord() (tok Token, value any) {
 	// Create a buffer and read the current character into it.
 	var buf bytes.Buffer
-	buf.WriteRune(s.read())
+	buf.WriteRune(l.read())
 
 	// Read every subsequent ident character into the buffer.
 	// Non-ident characters and EOF will cause the loop to exit.
 	for {
-		if ch := s.read(); ch == eof {
+		if ch := l.read(); ch == eof {
 			break
 		} else if !unicode.IsLetter(ch) && !unicode.IsDigit(ch) && ch != '_' {
-			s.unread()
+			l.unread()
 			break
 		} else {
 			_, _ = buf.WriteRune(ch)
 		}
 	}
 	// If the string matches a keyword then return that keyword.
-	v := buf.String()
-	switch v {
+	s := buf.String()
+	switch s {
 	case "yes":
-		return Yes, v
+		return Boolean, true
 	case "no":
-		return No, v
+		return Boolean, false
 	}
 
 	// Otherwise return as a regular identifier.
-	return Identifier, v
+	return Identifier, s
 }
 
 // scanWord consumes the current rune and all contiguous ident runes.
-func (s *Scanner) scanString() (tok Token, lit string) {
+func (l *Lexer) scanString() (tok Token, value string) {
 	// Create a buffer and read the current character into it.
 	var buf bytes.Buffer
-	buf.WriteRune(s.read())
+	buf.WriteRune(l.read())
 
 	for {
-		if ch := s.read(); ch == eof {
+		if ch := l.read(); ch == eof {
 			break
 		} else if ch == '"' {
 			break
@@ -157,21 +158,30 @@ func (s *Scanner) scanString() (tok Token, lit string) {
 }
 
 // scanWord consumes the current rune and all contiguous ident runes.
-func (s *Scanner) scanNumber() (tok Token, lit string) {
+func (l *Lexer) scanNumber() (tok Token, value any) {
 	// Create a buffer and read the current character into it.
 	var buf bytes.Buffer
-	buf.WriteRune(s.read())
+	buf.WriteRune(l.read())
 
 	for {
-		if ch := s.read(); ch == eof {
+		if ch := l.read(); ch == eof {
 			break
 		} else if !unicode.IsDigit(ch) && ch != '.' {
-			s.unread()
+			l.unread()
 			break
 		} else {
 			_, _ = buf.WriteRune(ch)
 		}
 	}
 
-	return Number, buf.String()
+	s := buf.String()
+	x1, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		panic(err)
+	}
+	x2 := int(x1)
+	if x1 == float64(x2) {
+		return Integer, x2
+	}
+	return Float, x1
 }
