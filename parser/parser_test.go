@@ -20,12 +20,26 @@ func TestParser(t *testing.T) {
 		{"alpha=\"special text\"", map[string]any{"alpha": "special text"}},
 		{"1=\"test\"", map[string]any{"1": "test"}},
 		{"alpha={5 6}", map[string]any{"alpha": []int{5, 6}}},
+		{"alpha={5.1 6.2}", map[string]any{"alpha": []float64{5.1, 6.2}}},
 		{"alpha={\"first\" \"second\"}", map[string]any{"alpha": []string{"first", "second"}}},
 		{"alpha={bravo={1 2 3}}", map[string]any{"alpha": map[string]any{"bravo": []int{1, 2, 3}}}},
 		{"alpha={bravo=3}", map[string]any{"alpha": map[string]any{"bravo": 3}}},
 		{"alpha=5 bravo=6 charlie=7", map[string]any{"alpha": 5, "bravo": 6, "charlie": 7}},
-		{"alpha={bravo=3 charlie=7}", map[string]any{"alpha": map[string]any{"bravo": 3, "charlie": 7}}},
-		{"alpha={{bravo=1}{bravo=2}}", map[string]any{"alpha": []map[string]any{{"bravo": 1}, {"bravo": 2}}}},
+		{
+			"alpha={bravo=3 charlie=7}",
+			map[string]any{"alpha": map[string]any{"bravo": 3, "charlie": 7}},
+		},
+		{
+			"alpha={{bravo=1}{bravo=2}}",
+			map[string]any{"alpha": []map[string]any{{"bravo": 1}, {"bravo": 2}}},
+		},
+		// {
+		// 	"alpha={0={bravo=1} 1={charlie=7}}",
+		// 	map[string]any{"alpha": map[string]any{
+		// 		"0": map[string]any{"bravo": 1},
+		// 		"1": map[string]any{"bravo": 2}},
+		// 	},
+		// },
 	}
 	for _, tc := range cases {
 		t.Run(fmt.Sprintf(tc.in), func(t *testing.T) {

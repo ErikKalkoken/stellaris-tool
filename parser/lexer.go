@@ -9,22 +9,6 @@ import (
 	"unicode"
 )
 
-type Token uint
-
-const (
-	Illegal Token = iota
-	Eof
-	Whitespace
-	Equal
-	BracketsOpen
-	BracketsClose
-	Identifier
-	String
-	Float
-	Integer
-	Boolean
-)
-
 var eof = rune(0)
 
 // Lexer represents a lexical scanner.

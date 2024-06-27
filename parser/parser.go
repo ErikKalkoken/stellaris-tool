@@ -71,16 +71,18 @@ loop:
 					}
 				}
 			} else {
-				// Array of values
-				p.unscan()
+				// Array of value
 				switch tok {
 				case Identifier:
+					p.unscan()
 					x, err := p.Parse()
 					if err != nil {
 						return nil, err
 					}
 					value = x
 				case Integer:
+
+					p.unscan()
 					x := make([]int, 0)
 					for {
 						tok2, v2 := p.scanIgnoreWhitespace()
@@ -88,9 +90,29 @@ loop:
 							value = x
 							break
 						}
-						x = append(x, v2.(int))
+						y, ok := v2.(int)
+						if !ok {
+							return nil, p.makeError("Expected type integer, but got: %v", v2)
+						}
+						x = append(x, y)
+					}
+				case Float:
+					p.unscan()
+					x := make([]float64, 0)
+					for {
+						tok2, v2 := p.scanIgnoreWhitespace()
+						if tok2 == BracketsClose {
+							value = x
+							break
+						}
+						y, ok := v2.(float64)
+						if !ok {
+							return nil, p.makeError("Expected type float, but got: %v", v2)
+						}
+						x = append(x, y)
 					}
 				case String:
+					p.unscan()
 					x := make([]string, 0)
 					for {
 						tok2, v2 := p.scanIgnoreWhitespace()
@@ -98,7 +120,11 @@ loop:
 							value = x
 							break
 						}
-						x = append(x, v2.(string))
+						y, ok := v2.(string)
+						if !ok {
+							return nil, p.makeError("Expected type string, but got: %v", v2)
+						}
+						x = append(x, y)
 					}
 				default:
 					return nil, p.makeError("invalid token %v for array", v)
