@@ -23,7 +23,7 @@ func NewLexer(r io.Reader) *Lexer {
 }
 
 // Lex returns the next token and literal value.
-func (l *Lexer) Lex() Token {
+func (l *Lexer) Lex() token {
 	// Read the next rune.
 	ch := l.read()
 
@@ -42,16 +42,16 @@ func (l *Lexer) Lex() Token {
 
 	switch ch {
 	case eof:
-		return Token{Eof, ""}
+		return token{eofType, ""}
 	case '{':
-		return Token{BracketsOpen, string(ch)}
+		return token{bracketsOpenType, string(ch)}
 	case '}':
-		return Token{BracketsClose, string(ch)}
+		return token{bracketsCloseType, string(ch)}
 	case '=':
-		return Token{EqualSign, string(ch)}
+		return token{equalSignType, string(ch)}
 	}
 
-	return Token{Illegal, string(ch)}
+	return token{illegalType, string(ch)}
 }
 
 // read reads the next rune from the buffered reader.
@@ -71,7 +71,7 @@ func (l *Lexer) unread() {
 
 // scanWhitespace identifies a whitespace token, which can contain multiple continuous whitespace runes.
 // It also updates the current line number.
-func (l *Lexer) scanWhitespace() Token {
+func (l *Lexer) scanWhitespace() token {
 	var buf bytes.Buffer
 	buf.WriteRune(l.read())
 
@@ -88,11 +88,11 @@ func (l *Lexer) scanWhitespace() Token {
 
 	s := buf.String()
 	l.loc += strings.Count(s, "\n")
-	return Token{Whitespace, s}
+	return token{whitespaceType, s}
 }
 
 // scanWord identifiers a word, which can be an identifier or a keyword.
-func (l *Lexer) scanWord() Token {
+func (l *Lexer) scanWord() token {
 	var buf bytes.Buffer
 	buf.WriteRune(l.read())
 
@@ -111,16 +111,26 @@ func (l *Lexer) scanWord() Token {
 	s := buf.String()
 	switch s {
 	case "yes":
-		return Token{Boolean, true}
+		return token{booleanType, true}
 	case "no":
-		return Token{Boolean, false}
+		return token{booleanType, false}
+	case "not_set":
+		return token{keywordType, NotSet}
+	case "indeterminable":
+		return token{keywordType, Indeterminable}
+	case "male":
+		return token{keywordType, Male}
+	case "female":
+		return token{keywordType, Female}
+	case "none":
+		return token{keywordType, None}
 	}
 	// Otherwise return as a identifier.
-	return Token{Identifier, s}
+	return token{identifierType, s}
 }
 
 // scanWord identifies a string token.
-func (l *Lexer) scanString() Token {
+func (l *Lexer) scanString() token {
 	// Create a buffer and read the current character into it.
 	var buf bytes.Buffer
 	buf.WriteRune(l.read())
@@ -134,11 +144,11 @@ func (l *Lexer) scanString() Token {
 			_, _ = buf.WriteRune(ch)
 		}
 	}
-	return Token{String, buf.String()}
+	return token{stringType, buf.String()}
 }
 
 // scanNumber identifiers a number type token.
-func (l *Lexer) scanNumber() Token {
+func (l *Lexer) scanNumber() token {
 	// Create a buffer and read the current character into it.
 	var buf bytes.Buffer
 	buf.WriteRune(l.read())
@@ -161,7 +171,7 @@ func (l *Lexer) scanNumber() Token {
 	}
 	x2 := int(x1)
 	if x1 == float64(x2) {
-		return Token{Integer, x2}
+		return token{integerType, x2}
 	}
-	return Token{Float, x1}
+	return token{floatType, x1}
 }

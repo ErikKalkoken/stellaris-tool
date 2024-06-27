@@ -6,17 +6,28 @@ import (
 	"strconv"
 )
 
+type Keyword uint
+
+// Keywords
+const (
+	None Keyword = iota + 1
+	NotSet
+	Indeterminable
+	Male
+	Female
+)
+
 // Parser represents a parser.
 type Parser struct {
 	// Provides a stream of tokens
 	lex *Lexer
 	// Stack of latest tokens so we can go back
-	ts stack[Token]
+	ts stack[token]
 }
 
 // NewParser returns a new instance of Parser.
 func NewParser(r io.Reader) *Parser {
-	return &Parser{lex: NewLexer(r), ts: newStack[Token](3)}
+	return &Parser{lex: NewLexer(r), ts: newStack[token](3)}
 }
 func (p *Parser) Parse() (map[string]any, error) {
 	x := make(map[string]any)
@@ -28,32 +39,32 @@ loop:
 
 		// First token should be identifier or integer
 		switch tok := p.nextRegularToken(); tok.typ {
-		case Eof, BracketsClose:
+		case eofType, bracketsCloseType:
 			break loop
-		case Identifier:
+		case identifierType:
 			key = tok.value.(string)
-		case Integer:
+		case integerType:
 			key = strconv.Itoa(tok.value.(int))
 		default:
 			return nil, p.makeError("found %v, expected identifier or integer", tok)
 		}
 
 		// Next should be an equal sign
-		if tok := p.nextRegularToken(); tok.typ != EqualSign {
+		if tok := p.nextRegularToken(); tok.typ != equalSignType {
 			return nil, p.makeError("found %v, expected equal sign", tok)
 		}
 
 		// Next should be some kind of value
 		switch tok := p.nextRegularToken(); tok.typ {
-		case String, Float, Integer, Boolean:
+		case stringType, floatType, integerType, booleanType, keywordType:
 			value = tok.value
-		case BracketsOpen:
+		case bracketsOpenType:
 			tok2 := p.nextRegularToken()
 			switch tok2.typ {
-			case BracketsClose:
+			case bracketsCloseType:
 				// Empty object
 				value = struct{}{}
-			case BracketsOpen:
+			case bracketsOpenType:
 				// Array of objects
 				x := make([]map[string]any, 0)
 				for {
@@ -63,14 +74,14 @@ loop:
 					}
 					x = append(x, v2)
 					tok3 := p.nextRegularToken()
-					if tok3.typ == BracketsClose {
+					if tok3.typ == bracketsCloseType {
 						break
-					} else if tok3.typ != BracketsOpen {
+					} else if tok3.typ != bracketsOpenType {
 						return nil, p.makeError("Unexpected token %v in obj array", tok3)
 					}
 				}
 				value = x
-			case Identifier:
+			case identifierType:
 				// Normal object
 				p.backup(tok2)
 				x, err := p.Parse()
@@ -78,11 +89,11 @@ loop:
 					return nil, err
 				}
 				value = x
-			case Integer:
+			case integerType:
 				tok3 := p.nextRegularToken()
 				p.backup(tok3)
 				p.backup(tok2)
-				if tok3.typ == EqualSign {
+				if tok3.typ == equalSignType {
 					// ID object
 					x, err := p.Parse()
 					if err != nil {
@@ -95,7 +106,7 @@ loop:
 				x := make([]int, 0)
 				for {
 					tok3 := p.nextRegularToken()
-					if tok3.typ == BracketsClose {
+					if tok3.typ == bracketsCloseType {
 						value = x
 						break
 					}
@@ -105,13 +116,13 @@ loop:
 					}
 					x = append(x, y)
 				}
-			case Float:
+			case floatType:
 				// Array of float
 				p.backup(tok2)
 				x := make([]float64, 0)
 				for {
 					tok3 := p.nextRegularToken()
-					if tok3.typ == BracketsClose {
+					if tok3.typ == bracketsCloseType {
 						value = x
 						break
 					}
@@ -121,13 +132,13 @@ loop:
 					}
 					x = append(x, y)
 				}
-			case String:
+			case stringType:
 				// Array of string
 				p.backup(tok2)
 				x := make([]string, 0)
 				for {
 					tok3 := p.nextRegularToken()
-					if tok3.typ == BracketsClose {
+					if tok3.typ == bracketsCloseType {
 						value = x
 						break
 					}
@@ -150,9 +161,9 @@ loop:
 }
 
 // nextRegularToken return the next non-whitespace token
-func (p *Parser) nextRegularToken() Token {
+func (p *Parser) nextRegularToken() token {
 	token := p.nextToken()
-	if token.typ == Whitespace {
+	if token.typ == whitespaceType {
 		return p.nextToken()
 	}
 	return token
@@ -160,7 +171,7 @@ func (p *Parser) nextRegularToken() Token {
 
 // nextToken returns the next token from the underlying scanner.
 // If a token has been unscanned then read that instead.
-func (p *Parser) nextToken() Token {
+func (p *Parser) nextToken() token {
 	// If we have a token on the buffer, then return it.
 	if !p.ts.isEmpty() {
 		token, err := p.ts.pop()
@@ -174,7 +185,7 @@ func (p *Parser) nextToken() Token {
 }
 
 // backup pushes the a token back onto the stack.
-func (p *Parser) backup(tok Token) {
+func (p *Parser) backup(tok token) {
 	p.ts.push(tok)
 }
 

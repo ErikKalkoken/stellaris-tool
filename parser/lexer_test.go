@@ -11,18 +11,23 @@ import (
 func TestSingleTokens(t *testing.T) {
 	cases := []struct {
 		in   string
-		want Token
+		want token
 	}{
-		{"name", Token{Identifier, "name"}},
-		{"\"string\"", Token{String, "string"}},
-		{"1.234", Token{Float, 1.234}},
-		{"yes", Token{Boolean, true}},
-		{"no", Token{Boolean, false}},
-		{"{", Token{BracketsOpen, "{"}},
-		{"}", Token{BracketsClose, "}"}},
-		{" ", Token{Whitespace, " "}},
-		{" 			 ", Token{Whitespace, " 			 "}},
-		{"#", Token{Illegal, "#"}},
+		{"name", token{identifierType, "name"}},
+		{"\"string\"", token{stringType, "string"}},
+		{"1.234", token{floatType, 1.234}},
+		{"42", token{integerType, 42}},
+		{"{", token{bracketsOpenType, "{"}},
+		{"}", token{bracketsCloseType, "}"}},
+		{" ", token{whitespaceType, " "}},
+		{" 			 ", token{whitespaceType, " 			 "}},
+		{"#", token{illegalType, "#"}},
+		// keywords
+		{"yes", token{booleanType, true}},
+		{"no", token{booleanType, false}},
+		{"not_set", token{keywordType, NotSet}},
+		{"indeterminable", token{keywordType, Indeterminable}},
+		{"none", token{keywordType, None}},
 	}
 	for _, tc := range cases {
 		t.Run(fmt.Sprintf("in: %s", tc.in), func(t *testing.T) {
@@ -41,27 +46,27 @@ func TestMultipleTokens(t *testing.T) {
 	}{
 		{
 			"hello world",
-			[]tokenType{Identifier, Whitespace, Identifier},
+			[]tokenType{identifierType, whitespaceType, identifierType},
 		},
 		{
 			"hello    	   world",
-			[]tokenType{Identifier, Whitespace, Identifier},
+			[]tokenType{identifierType, whitespaceType, identifierType},
 		},
 		{
 			"yes no hello",
-			[]tokenType{Boolean, Whitespace, Boolean, Whitespace, Identifier},
+			[]tokenType{booleanType, whitespaceType, booleanType, whitespaceType, identifierType},
 		},
 		{
 			"first=\"second 123 $%&\"",
-			[]tokenType{Identifier, EqualSign, String},
+			[]tokenType{identifierType, equalSignType, stringType},
 		},
 		{
 			"first=123.45",
-			[]tokenType{Identifier, EqualSign, Float},
+			[]tokenType{identifierType, equalSignType, floatType},
 		},
 		{
 			"first=123.45second=5",
-			[]tokenType{Identifier, EqualSign, Float, Identifier, EqualSign, Integer},
+			[]tokenType{identifierType, equalSignType, floatType, identifierType, equalSignType, integerType},
 		},
 	}
 	for _, tc := range cases {
@@ -71,7 +76,7 @@ func TestMultipleTokens(t *testing.T) {
 			got := make([]tokenType, 0)
 			for {
 				token := s.Lex()
-				if token.typ == Eof {
+				if token.typ == eofType {
 					break
 				}
 				got = append(got, token.typ)
