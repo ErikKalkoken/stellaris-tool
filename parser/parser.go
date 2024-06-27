@@ -6,20 +6,17 @@ import (
 	"strconv"
 )
 
-type tokenBuffer struct {
-	token Token
-	n     int
-}
-
 // Parser represents a parser.
 type Parser struct {
-	l   *Lexer
-	buf tokenBuffer // last read token
+	// Provides a stream of tokens
+	lex *Lexer
+	// Stack of latest tokens so we can go back
+	ts stack[Token]
 }
 
 // NewParser returns a new instance of Parser.
 func NewParser(r io.Reader) *Parser {
-	return &Parser{l: NewLexer(r)}
+	return &Parser{lex: NewLexer(r), ts: newStack[Token](3)}
 }
 func (p *Parser) Parse() (map[string]any, error) {
 	x := make(map[string]any)
@@ -73,15 +70,14 @@ loop:
 				// Array of value
 				switch tok2.typ {
 				case Identifier:
-					p.unscan()
+					p.backup(tok2)
 					x, err := p.Parse()
 					if err != nil {
 						return nil, err
 					}
 					value = x
 				case Integer:
-
-					p.unscan()
+					p.backup(tok2)
 					x := make([]int, 0)
 					for {
 						tok3 := p.scanIgnoreWhitespace()
@@ -96,7 +92,7 @@ loop:
 						x = append(x, y)
 					}
 				case Float:
-					p.unscan()
+					p.backup(tok2)
 					x := make([]float64, 0)
 					for {
 						tok3 := p.scanIgnoreWhitespace()
@@ -111,7 +107,7 @@ loop:
 						x = append(x, y)
 					}
 				case String:
-					p.unscan()
+					p.backup(tok2)
 					x := make([]string, 0)
 					for {
 						tok3 := p.scanIgnoreWhitespace()
@@ -151,26 +147,23 @@ func (p *Parser) scanIgnoreWhitespace() Token {
 // If a token has been unscanned then read that instead.
 func (p *Parser) scan() Token {
 	// If we have a token on the buffer, then return it.
-	if p.buf.n != 0 {
-		p.buf.n = 0
-		return p.buf.token
+	if !p.ts.isEmpty() {
+		token, err := p.ts.pop()
+		if err != nil {
+			panic(err)
+		}
+		return token
 	}
-
 	// Otherwise read the next token from the scanner.
-	token := p.l.Lex()
-
-	// Save it to the buffer in case we unscan later.
-	p.buf.token = token
-
-	return token
+	return p.lex.Lex()
 }
 
-// unscan pushes the previously read token back onto the buffer.
-func (p *Parser) unscan() {
-	p.buf.n = 1
+// backup pushes the previously read token back onto the buffer.
+func (p *Parser) backup(tok Token) {
+	p.ts.push(tok)
 }
 
 func (p *Parser) makeError(format string, a ...any) error {
 	s := fmt.Sprintf(format, a...)
-	return fmt.Errorf("%s in line %d", s, p.l.loc)
+	return fmt.Errorf("%s in line %d", s, p.lex.loc)
 }

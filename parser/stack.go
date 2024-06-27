@@ -45,3 +45,8 @@ func (s *stack[T]) pop() (T, error) {
 	s.l = slices.Delete(s.l, last, last+1)
 	return v, nil
 }
+
+// isEmpty reports wether the stack is empty
+func (s *stack[T]) isEmpty() bool {
+	return len(s.l) == 0
+}
