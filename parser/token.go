@@ -6,7 +6,7 @@ const (
 	Illegal tokenType = iota
 	Eof
 	Whitespace
-	Equal
+	EqualSign
 	BracketsOpen
 	BracketsClose
 	Identifier

@@ -33,13 +33,13 @@ func TestParser(t *testing.T) {
 			"alpha={{bravo=1}{bravo=2}}",
 			map[string]any{"alpha": []map[string]any{{"bravo": 1}, {"bravo": 2}}},
 		},
-		// {
-		// 	"alpha={0={bravo=1} 1={charlie=7}}",
-		// 	map[string]any{"alpha": map[string]any{
-		// 		"0": map[string]any{"bravo": 1},
-		// 		"1": map[string]any{"bravo": 2}},
-		// 	},
-		// },
+		{
+			"alpha={0={bravo=1} 1={charlie=7}}",
+			map[string]any{"alpha": map[string]any{
+				"0": map[string]any{"bravo": 1},
+				"1": map[string]any{"charlie": 7}},
+			},
+		},
 	}
 	for _, tc := range cases {
 		t.Run(fmt.Sprintf(tc.in), func(t *testing.T) {

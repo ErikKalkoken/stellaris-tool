@@ -48,7 +48,7 @@ func (l *Lexer) Lex() Token {
 	case '}':
 		return Token{BracketsClose, string(ch)}
 	case '=':
-		return Token{Equal, string(ch)}
+		return Token{EqualSign, string(ch)}
 	}
 
 	return Token{Illegal, string(ch)}

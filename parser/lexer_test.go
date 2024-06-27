@@ -53,15 +53,15 @@ func TestMultipleTokens(t *testing.T) {
 		},
 		{
 			"first=\"second 123 $%&\"",
-			[]tokenType{Identifier, Equal, String},
+			[]tokenType{Identifier, EqualSign, String},
 		},
 		{
 			"first=123.45",
-			[]tokenType{Identifier, Equal, Float},
+			[]tokenType{Identifier, EqualSign, Float},
 		},
 		{
 			"first=123.45second=5",
-			[]tokenType{Identifier, Equal, Float, Identifier, Equal, Integer},
+			[]tokenType{Identifier, EqualSign, Float, Identifier, EqualSign, Integer},
 		},
 	}
 	for _, tc := range cases {

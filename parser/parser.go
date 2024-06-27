@@ -39,7 +39,7 @@ loop:
 		}
 
 		// Next should be an equal sign
-		if tok := p.nextRegularToken(); tok.typ != Equal {
+		if tok := p.nextRegularToken(); tok.typ != EqualSign {
 			return nil, p.makeError("found %v, expected equal sign", tok)
 		}
 
@@ -77,7 +77,17 @@ loop:
 					}
 					value = x
 				case Integer:
+					tok3 := p.nextRegularToken()
+					p.backup(tok3)
 					p.backup(tok2)
+					if tok3.typ == EqualSign {
+						x, err := p.Parse()
+						if err != nil {
+							return nil, err
+						}
+						value = x
+						break
+					}
 					x := make([]int, 0)
 					for {
 						tok3 := p.nextRegularToken()
@@ -158,7 +168,7 @@ func (p *Parser) nextToken() Token {
 	return p.lex.Lex()
 }
 
-// backup pushes the previously read token back onto the buffer.
+// backup pushes the a token back onto the stack.
 func (p *Parser) backup(tok Token) {
 	p.ts.push(tok)
 }
