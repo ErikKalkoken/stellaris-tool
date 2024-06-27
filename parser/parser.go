@@ -7,8 +7,7 @@ import (
 )
 
 type tokenBuffer struct {
-	tok   Token
-	value any
+	token Token
 	n     int
 }
 
@@ -31,29 +30,29 @@ loop:
 		var value any
 
 		// First token should be identifier or integer
-		switch tok, v := p.scanIgnoreWhitespace(); tok {
+		switch tok := p.scanIgnoreWhitespace(); tok.typ {
 		case Eof, BracketsClose:
 			break loop
 		case Identifier:
-			key = v.(string)
+			key = tok.value.(string)
 		case Integer:
-			key = strconv.Itoa(v.(int))
+			key = strconv.Itoa(tok.value.(int))
 		default:
-			return nil, p.makeError("found %v, expected identifier or integer", v)
+			return nil, p.makeError("found %v, expected identifier or integer", tok)
 		}
 
 		// Next should be an equal sign
-		if tok, lit := p.scanIgnoreWhitespace(); tok != Equal {
-			return nil, p.makeError("found %v, expected equal sign", lit)
+		if tok := p.scanIgnoreWhitespace(); tok.typ != Equal {
+			return nil, p.makeError("found %v, expected equal sign", tok)
 		}
 
 		// Next should be some kind of value
-		switch tok, v := p.scanIgnoreWhitespace(); tok {
+		switch tok := p.scanIgnoreWhitespace(); tok.typ {
 		case String, Float, Integer, Boolean:
-			value = v
+			value = tok.value
 		case BracketsOpen:
-			tok, _ := p.scanIgnoreWhitespace()
-			if tok == BracketsOpen {
+			tok2 := p.scanIgnoreWhitespace()
+			if tok2.typ == BracketsOpen {
 				// Array of objects
 				x := make([]map[string]any, 0)
 				for {
@@ -62,17 +61,17 @@ loop:
 						return nil, err
 					}
 					x = append(x, v2)
-					tok2, _ := p.scanIgnoreWhitespace()
-					if tok2 == BracketsClose {
+					tok3 := p.scanIgnoreWhitespace()
+					if tok3.typ == BracketsClose {
 						value = x
 						break
-					} else if tok2 != BracketsOpen {
-						return nil, p.makeError("Unexpected token %v in obj array", tok2)
+					} else if tok3.typ != BracketsOpen {
+						return nil, p.makeError("Unexpected token %v in obj array", tok3)
 					}
 				}
 			} else {
 				// Array of value
-				switch tok {
+				switch tok2.typ {
 				case Identifier:
 					p.unscan()
 					x, err := p.Parse()
@@ -85,14 +84,14 @@ loop:
 					p.unscan()
 					x := make([]int, 0)
 					for {
-						tok2, v2 := p.scanIgnoreWhitespace()
-						if tok2 == BracketsClose {
+						tok3 := p.scanIgnoreWhitespace()
+						if tok3.typ == BracketsClose {
 							value = x
 							break
 						}
-						y, ok := v2.(int)
+						y, ok := tok3.value.(int)
 						if !ok {
-							return nil, p.makeError("Expected type integer, but got: %v", v2)
+							return nil, p.makeError("Expected type integer, but got: %v", tok3)
 						}
 						x = append(x, y)
 					}
@@ -100,14 +99,14 @@ loop:
 					p.unscan()
 					x := make([]float64, 0)
 					for {
-						tok2, v2 := p.scanIgnoreWhitespace()
-						if tok2 == BracketsClose {
+						tok3 := p.scanIgnoreWhitespace()
+						if tok3.typ == BracketsClose {
 							value = x
 							break
 						}
-						y, ok := v2.(float64)
+						y, ok := tok3.value.(float64)
 						if !ok {
-							return nil, p.makeError("Expected type float, but got: %v", v2)
+							return nil, p.makeError("Expected type float, but got: %v", tok2)
 						}
 						x = append(x, y)
 					}
@@ -115,24 +114,24 @@ loop:
 					p.unscan()
 					x := make([]string, 0)
 					for {
-						tok2, v2 := p.scanIgnoreWhitespace()
-						if tok2 == BracketsClose {
+						tok3 := p.scanIgnoreWhitespace()
+						if tok3.typ == BracketsClose {
 							value = x
 							break
 						}
-						y, ok := v2.(string)
+						y, ok := tok3.value.(string)
 						if !ok {
-							return nil, p.makeError("Expected type string, but got: %v", v2)
+							return nil, p.makeError("Expected type string, but got: %v", tok3)
 						}
 						x = append(x, y)
 					}
 				default:
-					return nil, p.makeError("invalid token %v for array", v)
+					return nil, p.makeError("invalid token %v for array", tok2)
 				}
 			}
 
 		default:
-			return nil, p.makeError("found %v, expected a value", v)
+			return nil, p.makeError("found %v, expected a value", tok)
 		}
 		x[key] = value
 	}
@@ -140,30 +139,30 @@ loop:
 }
 
 // scanIgnoreWhitespace scans the next non-whitespace token.
-func (p *Parser) scanIgnoreWhitespace() (tok Token, value any) {
-	tok, value = p.scan()
-	if tok == Whitespace {
-		tok, value = p.scan()
+func (p *Parser) scanIgnoreWhitespace() Token {
+	token := p.scan()
+	if token.typ == Whitespace {
+		return p.scan()
 	}
-	return
+	return token
 }
 
 // scan returns the next token from the underlying scanner.
 // If a token has been unscanned then read that instead.
-func (p *Parser) scan() (tok Token, value any) {
+func (p *Parser) scan() Token {
 	// If we have a token on the buffer, then return it.
 	if p.buf.n != 0 {
 		p.buf.n = 0
-		return p.buf.tok, p.buf.value
+		return p.buf.token
 	}
 
 	// Otherwise read the next token from the scanner.
-	tok, value = p.l.Lex()
+	token := p.l.Lex()
 
 	// Save it to the buffer in case we unscan later.
-	p.buf.tok, p.buf.value = tok, value
+	p.buf.token = token
 
-	return
+	return token
 }
 
 // unscan pushes the previously read token back onto the buffer.

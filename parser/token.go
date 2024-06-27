@@ -1,9 +1,9 @@
 package parser
 
-type Token uint
+type tokenType uint
 
 const (
-	Illegal Token = iota
+	Illegal tokenType = iota
 	Eof
 	Whitespace
 	Equal
@@ -15,3 +15,8 @@ const (
 	Integer
 	Boolean
 )
+
+type Token struct {
+	typ   tokenType
+	value any
+}

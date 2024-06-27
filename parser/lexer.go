@@ -23,7 +23,7 @@ func NewLexer(r io.Reader) *Lexer {
 }
 
 // Lex returns the next token and literal value.
-func (l *Lexer) Lex() (Token, any) {
+func (l *Lexer) Lex() Token {
 	// Read the next rune.
 	ch := l.read()
 
@@ -42,16 +42,16 @@ func (l *Lexer) Lex() (Token, any) {
 
 	switch ch {
 	case eof:
-		return Eof, ""
+		return Token{Eof, ""}
 	case '{':
-		return BracketsOpen, string(ch)
+		return Token{BracketsOpen, string(ch)}
 	case '}':
-		return BracketsClose, string(ch)
+		return Token{BracketsClose, string(ch)}
 	case '=':
-		return Equal, string(ch)
+		return Token{Equal, string(ch)}
 	}
 
-	return Illegal, string(ch)
+	return Token{Illegal, string(ch)}
 }
 
 // read reads the next rune from the buffered reader.
@@ -71,7 +71,7 @@ func (l *Lexer) unread() {
 
 // scanWhitespace identifies a whitespace token, which can contain multiple continuous whitespace runes.
 // It also updates the current line number.
-func (l *Lexer) scanWhitespace() (tok Token, value any) {
+func (l *Lexer) scanWhitespace() Token {
 	var buf bytes.Buffer
 	buf.WriteRune(l.read())
 
@@ -88,11 +88,11 @@ func (l *Lexer) scanWhitespace() (tok Token, value any) {
 
 	s := buf.String()
 	l.loc += strings.Count(s, "\n")
-	return Whitespace, s
+	return Token{Whitespace, s}
 }
 
 // scanWord identifiers a word, which can be an identifier or a keyword.
-func (l *Lexer) scanWord() (tok Token, value any) {
+func (l *Lexer) scanWord() Token {
 	var buf bytes.Buffer
 	buf.WriteRune(l.read())
 
@@ -111,16 +111,16 @@ func (l *Lexer) scanWord() (tok Token, value any) {
 	s := buf.String()
 	switch s {
 	case "yes":
-		return Boolean, true
+		return Token{Boolean, true}
 	case "no":
-		return Boolean, false
+		return Token{Boolean, false}
 	}
 	// Otherwise return as a identifier.
-	return Identifier, s
+	return Token{Identifier, s}
 }
 
 // scanWord identifies a string token.
-func (l *Lexer) scanString() (tok Token, value string) {
+func (l *Lexer) scanString() Token {
 	// Create a buffer and read the current character into it.
 	var buf bytes.Buffer
 	buf.WriteRune(l.read())
@@ -134,11 +134,11 @@ func (l *Lexer) scanString() (tok Token, value string) {
 			_, _ = buf.WriteRune(ch)
 		}
 	}
-	return String, buf.String()
+	return Token{String, buf.String()}
 }
 
 // scanNumber identifiers a number type token.
-func (l *Lexer) scanNumber() (tok Token, value any) {
+func (l *Lexer) scanNumber() Token {
 	// Create a buffer and read the current character into it.
 	var buf bytes.Buffer
 	buf.WriteRune(l.read())
@@ -161,7 +161,7 @@ func (l *Lexer) scanNumber() (tok Token, value any) {
 	}
 	x2 := int(x1)
 	if x1 == float64(x2) {
-		return Integer, x2
+		return Token{Integer, x2}
 	}
-	return Float, x1
+	return Token{Float, x1}
 }
