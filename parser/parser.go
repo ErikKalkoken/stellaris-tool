@@ -23,66 +23,74 @@ func NewParser(r io.Reader) *Parser {
 	return &Parser{l: NewScanner(r)}
 }
 func (p *Parser) Parse() (map[string]any, error) {
-	var key string
-	var value any
+	x := make(map[string]any)
 
-	// First token should be identifier or integer
-	switch tok, v := p.scanIgnoreWhitespace(); tok {
-	case Identifier:
-		key = v.(string)
-	case Integer:
-		key = strconv.Itoa(v.(int))
-	default:
-		return nil, fmt.Errorf("found %v, expected identifier or integer", v)
-	}
+loop:
+	for {
+		var key string
+		var value any
 
-	// Next should be an equal sign
-	if tok, lit := p.scanIgnoreWhitespace(); tok != Equal {
-		return nil, fmt.Errorf("found %v, expected equal sign", lit)
-	}
-
-	// Next should be some kind of value
-	switch tok, v := p.scanIgnoreWhitespace(); tok {
-	case String, Float, Integer:
-		value = v
-	case BracketsOpen:
-		tok, _ := p.scanIgnoreWhitespace()
-		p.unscan()
-		switch tok {
+		// First token should be identifier or integer
+		switch tok, v := p.scanIgnoreWhitespace(); tok {
+		case Eof, BracketsClose:
+			break loop
 		case Identifier:
-			v, err := p.Parse()
-			if err != nil {
-				return nil, err
-			}
-			value = v
+			key = v.(string)
 		case Integer:
-			x := make([]int, 0)
-			for {
-				tok, v := p.scanIgnoreWhitespace()
-				if tok == BracketsClose {
-					value = x
-					break
-				}
-				x = append(x, v.(int))
-			}
-		case String:
-			x := make([]string, 0)
-			for {
-				tok, v := p.scanIgnoreWhitespace()
-				if tok == BracketsClose {
-					value = x
-					break
-				}
-				x = append(x, v.(string))
-			}
+			key = strconv.Itoa(v.(int))
 		default:
-			return nil, fmt.Errorf("invalid token %v for array", v)
+			return nil, fmt.Errorf("found %v, expected identifier or integer", v)
 		}
 
-	default:
-		return nil, fmt.Errorf("found %v, expected a value", v)
+		// Next should be an equal sign
+		if tok, lit := p.scanIgnoreWhitespace(); tok != Equal {
+			return nil, fmt.Errorf("found %v, expected equal sign", lit)
+		}
+
+		// Next should be some kind of value
+		switch tok, v := p.scanIgnoreWhitespace(); tok {
+		case String, Float, Integer, Boolean:
+			value = v
+		case BracketsOpen:
+			tok, _ := p.scanIgnoreWhitespace()
+			p.unscan()
+			switch tok {
+			case Identifier:
+				v, err := p.Parse()
+				if err != nil {
+					return nil, err
+				}
+				value = v
+			case Integer:
+				x := make([]int, 0)
+				for {
+					tok, v := p.scanIgnoreWhitespace()
+					if tok == BracketsClose {
+						value = x
+						break
+					}
+					x = append(x, v.(int))
+				}
+			case String:
+				x := make([]string, 0)
+				for {
+					tok, v := p.scanIgnoreWhitespace()
+					if tok == BracketsClose {
+						value = x
+						break
+					}
+					x = append(x, v.(string))
+				}
+			default:
+				return nil, fmt.Errorf("invalid token %v for array", v)
+			}
+
+		default:
+			return nil, fmt.Errorf("found %v, expected a value", v)
+		}
+		x[key] = value
 	}
-	return map[string]any{key: value}, nil
+	return x, nil
 }
 
 // scanIgnoreWhitespace scans the next non-whitespace token.
