@@ -53,36 +53,56 @@ loop:
 			value = v
 		case BracketsOpen:
 			tok, _ := p.scanIgnoreWhitespace()
-			p.unscan()
-			switch tok {
-			case Identifier:
-				v, err := p.Parse()
-				if err != nil {
-					return nil, err
-				}
-				value = v
-			case Integer:
-				x := make([]int, 0)
+			if tok == BracketsOpen {
+				// Array of objects
+				x := make([]map[string]any, 0)
 				for {
-					tok, v := p.scanIgnoreWhitespace()
-					if tok == BracketsClose {
+					v2, err := p.Parse()
+					if err != nil {
+						return nil, err
+					}
+					x = append(x, v2)
+					tok2, _ := p.scanIgnoreWhitespace()
+					if tok2 == BracketsClose {
 						value = x
 						break
+					} else if tok2 != BracketsOpen {
+						return nil, p.makeError("Unexpected token %v in obj array", tok2)
 					}
-					x = append(x, v.(int))
 				}
-			case String:
-				x := make([]string, 0)
-				for {
-					tok, v := p.scanIgnoreWhitespace()
-					if tok == BracketsClose {
-						value = x
-						break
+			} else {
+				// Array of values
+				p.unscan()
+				switch tok {
+				case Identifier:
+					x, err := p.Parse()
+					if err != nil {
+						return nil, err
 					}
-					x = append(x, v.(string))
+					value = x
+				case Integer:
+					x := make([]int, 0)
+					for {
+						tok2, v2 := p.scanIgnoreWhitespace()
+						if tok2 == BracketsClose {
+							value = x
+							break
+						}
+						x = append(x, v2.(int))
+					}
+				case String:
+					x := make([]string, 0)
+					for {
+						tok2, v2 := p.scanIgnoreWhitespace()
+						if tok2 == BracketsClose {
+							value = x
+							break
+						}
+						x = append(x, v2.(string))
+					}
+				default:
+					return nil, p.makeError("invalid token %v for array", v)
 				}
-			default:
-				return nil, p.makeError("invalid token %v for array", v)
 			}
 
 		default:
