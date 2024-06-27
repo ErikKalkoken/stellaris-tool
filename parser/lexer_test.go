@@ -17,6 +17,7 @@ func TestSingleTokens(t *testing.T) {
 		{"\"string\"", token{stringType, "string"}},
 		{"1.234", token{floatType, 1.234}},
 		{"42", token{integerType, 42}},
+		{"-42", token{integerType, -42}},
 		{"{", token{bracketsOpenType, "{"}},
 		{"}", token{bracketsCloseType, "}"}},
 		{" ", token{whitespaceType, " "}},

@@ -35,7 +35,7 @@ func (l *Lexer) Lex() token {
 	} else if unicode.IsLetter(ch) {
 		l.unread()
 		return l.scanWord()
-	} else if unicode.IsDigit(ch) {
+	} else if unicode.IsDigit(ch) || ch == '-' {
 		l.unread()
 		return l.scanNumber()
 	}
@@ -156,7 +156,7 @@ func (l *Lexer) scanNumber() token {
 	for {
 		if ch := l.read(); ch == eof {
 			break
-		} else if !unicode.IsDigit(ch) && ch != '.' {
+		} else if !unicode.IsDigit(ch) && ch != '.' && ch != '-' {
 			l.unread()
 			break
 		} else {
