@@ -24,8 +24,6 @@ func TestParser(t *testing.T) {
 		{"alpha=none", map[string]any{"alpha": "none"}},
 		{"alpha=not_set", map[string]any{"alpha": "not_set"}},
 		{"alpha=male", map[string]any{"alpha": "male"}},
-		// ID object
-		{"1=\"test\"", map[string]any{"1": "test"}},
 		// Array
 		{"alpha={5 6}", map[string]any{"alpha": []int{5, 6}}},
 		{"alpha={5.1 6.2}", map[string]any{"alpha": []float64{5.1, 6.2}}},
@@ -51,6 +49,13 @@ func TestParser(t *testing.T) {
 				"0": map[string]any{"bravo": 1},
 				"1": map[string]any{"charlie": 7}},
 			},
+		},
+		// Special objects
+		{"alpha={1=\"test\"}", map[string]any{"alpha": map[string]any{"1": "test"}}},
+		{"alpha={\"bravo\"=3}", map[string]any{"alpha": map[string]any{"bravo": 3}}},
+		{
+			"alpha={1={bravo=2}}",
+			map[string]any{"alpha": map[string]any{"1": map[string]any{"bravo": 2}}},
 		},
 		// Special cases
 		{"alpha={}", map[string]any{"alpha": struct{}{}}},

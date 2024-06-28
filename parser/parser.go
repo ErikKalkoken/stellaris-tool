@@ -26,11 +26,11 @@ loop:
 		var key string
 		var value any
 
-		// First token should be identifier or integer
+		// First token should be identifier or integer or string
 		switch tok := p.nextToken(); tok.typ {
 		case eofType, bracketsCloseType:
 			break loop
-		case identifierType:
+		case identifierType, stringType:
 			key = tok.value.(string)
 		case integerType:
 			key = strconv.Itoa(tok.value.(int))
@@ -70,14 +70,33 @@ loop:
 					}
 				}
 				value = oo
-			case identifierType:
-				// Normal object
+			case identifierType, stringType:
+				tok3 := p.nextToken()
+				p.backup(tok3)
 				p.backup(tok2)
-				x, err := p.Parse()
-				if err != nil {
-					return nil, err
+				if tok3.typ == equalSignType {
+					// object
+					x, err := p.Parse()
+					if err != nil {
+						return nil, err
+					}
+					value = x
+				} else {
+					// Array of string
+					ss := make([]string, 0)
+					for {
+						tok3 := p.nextToken()
+						if tok3.typ == bracketsCloseType {
+							break
+						}
+						y, ok := tok3.value.(string)
+						if !ok {
+							return nil, p.makeError("Expected type string, but got: %v", tok3)
+						}
+						ss = append(ss, y)
+					}
+					value = ss
 				}
-				value = x
 			case integerType, floatType:
 				if tok2.typ == integerType {
 					tok3 := p.nextToken()
@@ -135,22 +154,6 @@ loop:
 					}
 					value = ii
 				}
-			case stringType:
-				// Array of string
-				p.backup(tok2)
-				ss := make([]string, 0)
-				for {
-					tok3 := p.nextToken()
-					if tok3.typ == bracketsCloseType {
-						break
-					}
-					y, ok := tok3.value.(string)
-					if !ok {
-						return nil, p.makeError("Expected type string, but got: %v", tok3)
-					}
-					ss = append(ss, y)
-				}
-				value = ss
 			case booleanType:
 				// Array of boolean
 				p.backup(tok2)
