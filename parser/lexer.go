@@ -28,16 +28,14 @@ func (l *Lexer) Lex() token {
 		ch := l.read()
 
 		if unicode.IsSpace(ch) {
+			l.unread()
 			l.consumeWhitespace()
 			continue
 		}
 
-		if unicode.IsLetter(ch) {
+		if unicode.IsLetter(ch) || unicode.IsDigit(ch) || ch == '-' {
 			l.unread()
 			return l.scanWord()
-		} else if unicode.IsDigit(ch) || ch == '-' {
-			l.unread()
-			return l.scanNumber()
 		}
 		switch ch {
 		case eof:
@@ -81,10 +79,13 @@ func (l *Lexer) consumeWhitespace() {
 			l.unread()
 			break
 		}
+		if ch == '\n' {
+			l.loc++
+		}
 	}
 }
 
-// scanWord identifiers a word, which can be an identifier or a keyword.
+// scanWord identifiers a word, which can be an identifier, a keyword or a number.
 func (l *Lexer) scanWord() token {
 	var buf bytes.Buffer
 	buf.WriteRune(l.read())
@@ -93,24 +94,40 @@ func (l *Lexer) scanWord() token {
 	for {
 		if ch := l.read(); ch == eof {
 			break
-		} else if !unicode.IsLetter(ch) && !unicode.IsDigit(ch) && ch != '_' {
+		} else if !unicode.IsLetter(ch) && !unicode.IsDigit(ch) && ch != '_' && ch != '-' && ch != '.' {
 			l.unread()
 			break
 		} else {
 			_, _ = buf.WriteRune(ch)
 		}
 	}
-	// If the word matches a keyword then return that that token.
+
 	s := buf.String()
+	hasLetter := false
+	for _, x := range s {
+		if unicode.IsLetter(x) || x == '_' {
+			hasLetter = true
+			break
+		}
+	}
+	if !hasLetter {
+		x1, err := strconv.ParseFloat(s, 64)
+		if err != nil {
+			panic(err)
+		}
+		x2 := int(x1)
+		if x1 == float64(x2) {
+			return token{integerType, x2}
+		}
+		return token{floatType, x1}
+	}
+
+	// If the word matches a keyword then return that that token.
 	switch s {
 	case "yes":
 		return token{booleanType, true}
 	case "no":
 		return token{booleanType, false}
-	case "not_set":
-		return token{keywordType, NotSet}
-	case "none":
-		return token{keywordType, None}
 	}
 	// Otherwise return as a identifier.
 	return token{identifierType, s}
@@ -134,31 +151,31 @@ func (l *Lexer) scanString() token {
 	return token{stringType, buf.String()}
 }
 
-// scanNumber identifiers a number type token.
-func (l *Lexer) scanNumber() token {
-	// Create a buffer and read the current character into it.
-	var buf bytes.Buffer
-	buf.WriteRune(l.read())
+// // scanNumber identifiers a number type token.
+// func (l *Lexer) scanNumber() token {
+// 	// Create a buffer and read the current character into it.
+// 	var buf bytes.Buffer
+// 	buf.WriteRune(l.read())
 
-	for {
-		if ch := l.read(); ch == eof {
-			break
-		} else if !unicode.IsDigit(ch) && ch != '.' && ch != '-' {
-			l.unread()
-			break
-		} else {
-			_, _ = buf.WriteRune(ch)
-		}
-	}
+// 	for {
+// 		if ch := l.read(); ch == eof {
+// 			break
+// 		} else if !unicode.IsDigit(ch) && ch != '.' && ch != '-' {
+// 			l.unread()
+// 			break
+// 		} else {
+// 			_, _ = buf.WriteRune(ch)
+// 		}
+// 	}
 
-	s := buf.String()
-	x1, err := strconv.ParseFloat(s, 64)
-	if err != nil {
-		panic(err)
-	}
-	x2 := int(x1)
-	if x1 == float64(x2) {
-		return token{integerType, x2}
-	}
-	return token{floatType, x1}
-}
+// 	s := buf.String()
+// 	x1, err := strconv.ParseFloat(s, 64)
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	x2 := int(x1)
+// 	if x1 == float64(x2) {
+// 		return token{integerType, x2}
+// 	}
+// 	return token{floatType, x1}
+// }

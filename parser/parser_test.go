@@ -21,8 +21,8 @@ func TestParser(t *testing.T) {
 		{"alpha=\"special text\"", map[string]any{"alpha": "special text"}},
 		{"alpha=yes", map[string]any{"alpha": true}},
 		{"alpha=no", map[string]any{"alpha": false}},
-		{"alpha=none", map[string]any{"alpha": parser.None}},
-		{"alpha=not_set", map[string]any{"alpha": parser.NotSet}},
+		{"alpha=none", map[string]any{"alpha": "none"}},
+		{"alpha=not_set", map[string]any{"alpha": "not_set"}},
 		{"alpha=male", map[string]any{"alpha": "male"}},
 		// ID object
 		{"1=\"test\"", map[string]any{"1": "test"}},
@@ -52,8 +52,9 @@ func TestParser(t *testing.T) {
 				"1": map[string]any{"charlie": 7}},
 			},
 		},
-		// Empty object
+		// Special cases
 		{"alpha={}", map[string]any{"alpha": struct{}{}}},
+		{"alpha={none={}}", map[string]any{"alpha": map[string]any{"none": struct{}{}}}},
 	}
 	for _, tc := range cases {
 		t.Run(fmt.Sprintf(tc.in), func(t *testing.T) {

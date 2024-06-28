@@ -26,8 +26,8 @@ func TestSingleTokens(t *testing.T) {
 		// special words
 		{"yes", token{booleanType, true}},
 		{"no", token{booleanType, false}},
-		{"none", token{keywordType, None}},
-		{"not_set", token{keywordType, NotSet}},
+		{"none", token{identifierType, "none"}},
+		{"not_set", token{identifierType, "not_set"}},
 		{"indeterminable", token{identifierType, "indeterminable"}},
 	}
 	for _, tc := range cases {
@@ -66,8 +66,12 @@ func TestMultipleTokens(t *testing.T) {
 			[]tokenType{identifierType, equalSignType, floatType},
 		},
 		{
-			"first=123.45second=5",
+			"first=123.45 second=5",
 			[]tokenType{identifierType, equalSignType, floatType, identifierType, equalSignType, integerType},
+		},
+		{
+			"first=none",
+			[]tokenType{identifierType, equalSignType, identifierType},
 		},
 	}
 	for _, tc := range cases {

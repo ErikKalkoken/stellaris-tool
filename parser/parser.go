@@ -6,14 +6,6 @@ import (
 	"strconv"
 )
 
-type Keyword string
-
-// Special keywords
-const (
-	None   Keyword = "none"
-	NotSet Keyword = "not_set"
-)
-
 // Parser represents a parser.
 type Parser struct {
 	// Provides a stream of tokens
