@@ -28,32 +28,38 @@ loop:
 
 		// First token should be identifier or integer or string
 		switch tok := p.nextToken(); tok.typ {
-		case eofType, bracketsCloseType:
+		case endOfFile, bracketsClose:
 			break loop
-		case identifierType, stringType:
+		case identifier, str:
 			key = tok.value.(string)
-		case integerType:
+		case integer:
 			key = strconv.Itoa(tok.value.(int))
 		default:
 			return nil, p.makeError("found %v, expected identifier or integer", tok)
 		}
 
 		// Next is usually an equal sign, or we assume one
-		if tok := p.nextToken(); tok.typ != equalSignType {
+		if tok := p.nextToken(); tok.typ != equalSign {
 			p.backup(tok)
 		}
 
 		// Next should be some kind of value
 		switch tok := p.nextToken(); tok.typ {
-		case stringType, floatType, integerType, booleanType, keywordType, identifierType:
+		case str, float, integer, boolean:
 			value = tok.value
-		case bracketsOpenType:
+		case identifier:
+			if tok.value == "none" || tok.value == "not_set" {
+				value = nil
+			} else {
+				value = tok.value
+			}
+		case bracketsOpen:
 			tok2 := p.nextToken()
 			switch tok2.typ {
-			case bracketsCloseType:
+			case bracketsClose:
 				// Empty object
 				value = struct{}{}
-			case bracketsOpenType:
+			case bracketsOpen:
 				// Array of objects
 				oo := make([]map[string]any, 0)
 				for {
@@ -63,16 +69,16 @@ loop:
 					}
 					oo = append(oo, v2)
 					tok3 := p.nextToken()
-					if tok3.typ == bracketsCloseType {
+					if tok3.typ == bracketsClose {
 						break
-					} else if tok3.typ != bracketsOpenType {
+					} else if tok3.typ != bracketsOpen {
 						return nil, p.makeError("Unexpected token %v in obj array", tok3)
 					}
 				}
 				value = oo
-			case identifierType, stringType:
+			case identifier, str:
 				tok3 := p.nextToken()
-				if tok3.typ == equalSignType {
+				if tok3.typ == equalSign {
 					// object
 					p.backup(tok3)
 					p.backup(tok2)
@@ -88,7 +94,7 @@ loop:
 					ss := make([]string, 0)
 					for {
 						tok3 := p.nextToken()
-						if tok3.typ == bracketsCloseType {
+						if tok3.typ == bracketsClose {
 							break
 						}
 						y, ok := tok3.value.(string)
@@ -99,12 +105,12 @@ loop:
 					}
 					value = ss
 				}
-			case integerType, floatType:
-				if tok2.typ == integerType {
+			case integer, float:
+				if tok2.typ == integer {
 					tok3 := p.nextToken()
 					p.backup(tok3)
 					p.backup(tok2)
-					if tok3.typ == equalSignType {
+					if tok3.typ == equalSign {
 						// ID object
 						x, err := p.Parse()
 						if err != nil {
@@ -113,59 +119,36 @@ loop:
 						value = x
 						break
 					}
-					if tok3.typ == bracketsOpenType {
+					if tok3.typ == bracketsOpen {
 						panic(p.makeError("Unexpected token: %v", tok3))
 					}
 				} else {
 					p.backup(tok2)
 				}
 				// Array of numbers
-				tt := make([]token, 0)
-				hasFloat := false
+				ff := make([]float64, 0)
 				for {
 					tok3 := p.nextToken()
-					if tok3.typ == bracketsCloseType {
+					if tok3.typ == bracketsClose {
 						break
 					}
-					tt = append(tt, tok3)
-					if tok3.typ == floatType {
-						hasFloat = true
+					switch tok3.typ {
+					case float:
+						ff = append(ff, tok3.value.(float64))
+					case integer:
+						ff = append(ff, float64(tok3.value.(int)))
+					default:
+						return nil, p.makeError("Unexpected token for float array: %v", tok3)
 					}
 				}
-				if hasFloat {
-					ff := make([]float64, len(tt))
-					for i, t := range tt {
-						switch t.typ {
-						case floatType:
-							ff[i] = t.value.(float64)
-						case integerType:
-							ff[i] = float64(t.value.(int))
-						default:
-							return nil, p.makeError("Unexpected token for float array: %v", t)
-						}
-					}
-					value = ff
-				} else {
-					ii := make([]int, len(tt))
-					for i, t := range tt {
-						switch t.typ {
-						case floatType:
-							ii[i] = int(t.value.(float64))
-						case integerType:
-							ii[i] = t.value.(int)
-						default:
-							return nil, p.makeError("Unexpected token type for float array: %v", t)
-						}
-					}
-					value = ii
-				}
-			case booleanType:
+				value = ff
+			case boolean:
 				// Array of boolean
 				p.backup(tok2)
 				ss := make([]bool, 0)
 				for {
 					tok3 := p.nextToken()
-					if tok3.typ == bracketsCloseType {
+					if tok3.typ == bracketsClose {
 						break
 					}
 					y, ok := tok3.value.(bool)
@@ -182,6 +165,10 @@ loop:
 		default:
 			return nil, p.makeError("found %v, expected a value", tok)
 		}
+		// _, ok := x[key]
+		// if ok {
+		// 	return nil, p.makeError("key %s already exists in this map: %v", key, x)
+		// }
 		x[key] = value
 	}
 	return x, nil

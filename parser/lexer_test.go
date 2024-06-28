@@ -13,22 +13,22 @@ func TestSingleTokens(t *testing.T) {
 		in   string
 		want token
 	}{
-		{"name", token{identifierType, "name"}},
-		{"\"string\"", token{stringType, "string"}},
-		{"1.234", token{floatType, 1.234}},
-		{"42", token{integerType, 42}},
-		{"-42", token{integerType, -42}},
-		{"{", token{bracketsOpenType, "{"}},
-		{"}", token{bracketsCloseType, "}"}},
-		{" ", token{eofType, ""}},
-		{" 			 ", token{eofType, ""}},
-		{"#", token{illegalType, "#"}},
+		{"name", token{identifier, "name"}},
+		{"\"string\"", token{str, "string"}},
+		{"1.234", token{float, 1.234}},
+		{"42", token{integer, 42}},
+		{"-42", token{integer, -42}},
+		{"{", token{bracketsOpen, "{"}},
+		{"}", token{bracketsClose, "}"}},
+		{" ", token{endOfFile, ""}},
+		{" 			 ", token{endOfFile, ""}},
+		{"#", token{illegal, "#"}},
 		// special words
-		{"yes", token{booleanType, true}},
-		{"no", token{booleanType, false}},
-		{"none", token{identifierType, "none"}},
-		{"not_set", token{identifierType, "not_set"}},
-		{"indeterminable", token{identifierType, "indeterminable"}},
+		{"yes", token{boolean, true}},
+		{"no", token{boolean, false}},
+		{"none", token{identifier, "none"}},
+		{"not_set", token{identifier, "not_set"}},
+		{"indeterminable", token{identifier, "indeterminable"}},
 	}
 	for _, tc := range cases {
 		t.Run(fmt.Sprintf("in: %s", tc.in), func(t *testing.T) {
@@ -47,39 +47,39 @@ func TestMultipleTokens(t *testing.T) {
 	}{
 		{
 			"hello world",
-			[]tokenType{identifierType, identifierType},
+			[]tokenType{identifier, identifier},
 		},
 		{
 			"hello    	   world",
-			[]tokenType{identifierType, identifierType},
+			[]tokenType{identifier, identifier},
 		},
 		{
 			"yes no hello",
-			[]tokenType{booleanType, booleanType, identifierType},
+			[]tokenType{boolean, boolean, identifier},
 		},
 		{
 			"first=\"second 123 $%&\"",
-			[]tokenType{identifierType, equalSignType, stringType},
+			[]tokenType{identifier, equalSign, str},
 		},
 		{
 			"first=123.45",
-			[]tokenType{identifierType, equalSignType, floatType},
+			[]tokenType{identifier, equalSign, float},
 		},
 		{
 			"first=123.45 second=5",
-			[]tokenType{identifierType, equalSignType, floatType, identifierType, equalSignType, integerType},
+			[]tokenType{identifier, equalSign, float, identifier, equalSign, integer},
 		},
 		{
 			"first=none",
-			[]tokenType{identifierType, equalSignType, identifierType},
+			[]tokenType{identifier, equalSign, identifier},
 		},
 		{
 			"x={next_usable_date=\"-5070.07.21\"}",
-			[]tokenType{identifierType, equalSignType, bracketsOpenType, identifierType, equalSignType, stringType, bracketsCloseType},
+			[]tokenType{identifier, equalSign, bracketsOpen, identifier, equalSign, str, bracketsClose},
 		},
 		{
 			"\"\" first=\"\"",
-			[]tokenType{stringType, identifierType, equalSignType, stringType},
+			[]tokenType{str, identifier, equalSign, str},
 		},
 	}
 	for _, tc := range cases {
@@ -89,7 +89,7 @@ func TestMultipleTokens(t *testing.T) {
 			got := make([]tokenType, 0)
 			for {
 				token := s.Lex()
-				if token.typ == eofType {
+				if token.typ == endOfFile {
 					break
 				}
 				got = append(got, token.typ)
@@ -105,7 +105,7 @@ func TestSpecialFeatures(t *testing.T) {
 		s := NewLexer(in)
 		for {
 			token := s.Lex()
-			if token.typ == eofType {
+			if token.typ == endOfFile {
 				break
 			}
 		}

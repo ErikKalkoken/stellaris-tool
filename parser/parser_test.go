@@ -14,23 +14,23 @@ func TestParser(t *testing.T) {
 		in   string
 		want map[string]any
 	}{
-		// simple values
+		// Regular values
 		{"alpha=5", map[string]any{"alpha": 5}},
 		{"alpha=5.3", map[string]any{"alpha": 5.3}},
 		{"alpha=\"special text\"", map[string]any{"alpha": "special text"}},
 		{"alpha=yes", map[string]any{"alpha": true}},
 		{"alpha=no", map[string]any{"alpha": false}},
-		{"alpha=none", map[string]any{"alpha": "none"}},
-		{"alpha=not_set", map[string]any{"alpha": "not_set"}},
 		{"alpha=male", map[string]any{"alpha": "male"}},
+		// Null values
+		{"alpha=none", map[string]any{"alpha": nil}},
+		{"alpha=not_set", map[string]any{"alpha": nil}},
 		// Array
-		{"alpha={5 6}", map[string]any{"alpha": []int{5, 6}}},
+		{"alpha={5 6}", map[string]any{"alpha": []float64{5, 6}}},
 		{"alpha={5.1 6.2}", map[string]any{"alpha": []float64{5.1, 6.2}}},
 		{"alpha={6.2 0}", map[string]any{"alpha": []float64{6.2, 0}}},
 		{"alpha={0 6.2}", map[string]any{"alpha": []float64{0, 6.2}}},
-		{"alpha={1 2}", map[string]any{"alpha": []int{1, 2}}},
 		{"alpha={\"first\" \"second\"}", map[string]any{"alpha": []string{"first", "second"}}},
-		{"alpha={bravo={1 2 3}}", map[string]any{"alpha": map[string]any{"bravo": []int{1, 2, 3}}}},
+		{"alpha={bravo={1 2 3}}", map[string]any{"alpha": map[string]any{"bravo": []float64{1, 2, 3}}}},
 		{
 			"alpha={{bravo=1}{bravo=2}}",
 			map[string]any{"alpha": []map[string]any{{"bravo": 1}, {"bravo": 2}}},

@@ -40,15 +40,15 @@ func (l *Lexer) Lex() token {
 		}
 		switch ch {
 		case eof:
-			return token{eofType, ""}
+			return token{endOfFile, ""}
 		case '{':
-			return token{bracketsOpenType, string(ch)}
+			return token{bracketsOpen, string(ch)}
 		case '}':
-			return token{bracketsCloseType, string(ch)}
+			return token{bracketsClose, string(ch)}
 		case '=':
-			return token{equalSignType, string(ch)}
+			return token{equalSign, string(ch)}
 		}
-		return token{illegalType, string(ch)}
+		return token{illegal, string(ch)}
 	}
 }
 
@@ -114,21 +114,21 @@ func (l *Lexer) scanWord() token {
 		if err == nil { // if this was no float after we assume a string
 			x2 := int(x1)
 			if x1 == float64(x2) {
-				return token{integerType, x2}
+				return token{integer, x2}
 			}
-			return token{floatType, x1}
+			return token{float, x1}
 		}
 	}
 
 	// If the word matches a keyword then return that that token.
 	switch s {
 	case "yes":
-		return token{booleanType, true}
+		return token{boolean, true}
 	case "no":
-		return token{booleanType, false}
+		return token{boolean, false}
 	}
 	// Otherwise return as a identifier.
-	return token{identifierType, s}
+	return token{identifier, s}
 }
 
 // scanWord identifies a string token.
@@ -142,5 +142,5 @@ func (l *Lexer) scanString() token {
 		_, _ = buf.WriteRune(ch)
 	}
 	s := buf.String()
-	return token{stringType, s}
+	return token{str, s}
 }
