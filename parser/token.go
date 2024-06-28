@@ -5,7 +5,6 @@ type tokenType string
 const (
 	illegalType       tokenType = "illegal"
 	eofType           tokenType = "eof"
-	whitespaceType    tokenType = "whitespace"
 	equalSignType     tokenType = "equalSign"
 	bracketsOpenType  tokenType = "bracketsOpen"
 	bracketsCloseType tokenType = "bracketsClose"

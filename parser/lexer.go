@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"io"
 	"strconv"
-	"strings"
 	"unicode"
 )
 
@@ -25,33 +24,35 @@ func NewLexer(r io.Reader) *Lexer {
 // Lex returns the next token and literal value.
 func (l *Lexer) Lex() token {
 	// Read the next rune.
-	ch := l.read()
+	for {
+		ch := l.read()
 
-	if unicode.IsSpace(ch) {
-		l.unread()
-		return l.scanWhitespace()
-	} else if ch == '"' {
-		return l.scanString()
-	} else if unicode.IsLetter(ch) {
-		l.unread()
-		return l.scanWord()
-	} else if unicode.IsDigit(ch) || ch == '-' {
-		l.unread()
-		return l.scanNumber()
+		if unicode.IsSpace(ch) {
+			l.consumeWhitespace()
+			continue
+		}
+
+		if unicode.IsLetter(ch) {
+			l.unread()
+			return l.scanWord()
+		} else if unicode.IsDigit(ch) || ch == '-' {
+			l.unread()
+			return l.scanNumber()
+		}
+		switch ch {
+		case eof:
+			return token{eofType, ""}
+		case '"':
+			return l.scanString()
+		case '{':
+			return token{bracketsOpenType, string(ch)}
+		case '}':
+			return token{bracketsCloseType, string(ch)}
+		case '=':
+			return token{equalSignType, string(ch)}
+		}
+		return token{illegalType, string(ch)}
 	}
-
-	switch ch {
-	case eof:
-		return token{eofType, ""}
-	case '{':
-		return token{bracketsOpenType, string(ch)}
-	case '}':
-		return token{bracketsCloseType, string(ch)}
-	case '=':
-		return token{equalSignType, string(ch)}
-	}
-
-	return token{illegalType, string(ch)}
 }
 
 // read reads the next rune from the buffered reader.
@@ -69,26 +70,18 @@ func (l *Lexer) unread() {
 	_ = l.r.UnreadRune()
 }
 
-// scanWhitespace identifies a whitespace token, which can contain multiple continuous whitespace runes.
-// It also updates the current line number.
-func (l *Lexer) scanWhitespace() token {
-	var buf bytes.Buffer
-	buf.WriteRune(l.read())
-
+// consumeWhitespace consumes all whitespace from the reader.
+func (l *Lexer) consumeWhitespace() {
 	for {
-		if ch := l.read(); ch == eof {
+		ch := l.read()
+		if ch == eof {
 			break
-		} else if !unicode.IsSpace(ch) {
+		}
+		if !unicode.IsSpace(ch) {
 			l.unread()
 			break
-		} else {
-			buf.WriteRune(ch)
 		}
 	}
-
-	s := buf.String()
-	l.loc += strings.Count(s, "\n")
-	return token{whitespaceType, s}
 }
 
 // scanWord identifiers a word, which can be an identifier or a keyword.

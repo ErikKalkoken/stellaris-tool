@@ -35,7 +35,7 @@ loop:
 		var value any
 
 		// First token should be identifier or integer
-		switch tok := p.nextRegularToken(); tok.typ {
+		switch tok := p.nextToken(); tok.typ {
 		case eofType, bracketsCloseType:
 			break loop
 		case identifierType:
@@ -47,16 +47,16 @@ loop:
 		}
 
 		// Next should be an equal sign
-		if tok := p.nextRegularToken(); tok.typ != equalSignType {
+		if tok := p.nextToken(); tok.typ != equalSignType {
 			return nil, p.makeError("found %v, expected equal sign", tok)
 		}
 
 		// Next should be some kind of value
-		switch tok := p.nextRegularToken(); tok.typ {
+		switch tok := p.nextToken(); tok.typ {
 		case stringType, floatType, integerType, booleanType, keywordType, identifierType:
 			value = tok.value
 		case bracketsOpenType:
-			tok2 := p.nextRegularToken()
+			tok2 := p.nextToken()
 			switch tok2.typ {
 			case bracketsCloseType:
 				// Empty object
@@ -70,7 +70,7 @@ loop:
 						return nil, err
 					}
 					oo = append(oo, v2)
-					tok3 := p.nextRegularToken()
+					tok3 := p.nextToken()
 					if tok3.typ == bracketsCloseType {
 						break
 					} else if tok3.typ != bracketsOpenType {
@@ -88,7 +88,7 @@ loop:
 				value = x
 			case integerType, floatType:
 				if tok2.typ == integerType {
-					tok3 := p.nextRegularToken()
+					tok3 := p.nextToken()
 					p.backup(tok3)
 					p.backup(tok2)
 					if tok3.typ == equalSignType {
@@ -107,7 +107,7 @@ loop:
 				tt := make([]token, 0)
 				hasFloat := false
 				for {
-					tok3 := p.nextRegularToken()
+					tok3 := p.nextToken()
 					if tok3.typ == bracketsCloseType {
 						break
 					}
@@ -148,7 +148,7 @@ loop:
 				p.backup(tok2)
 				ss := make([]string, 0)
 				for {
-					tok3 := p.nextRegularToken()
+					tok3 := p.nextToken()
 					if tok3.typ == bracketsCloseType {
 						break
 					}
@@ -164,7 +164,7 @@ loop:
 				p.backup(tok2)
 				ss := make([]bool, 0)
 				for {
-					tok3 := p.nextRegularToken()
+					tok3 := p.nextToken()
 					if tok3.typ == bracketsCloseType {
 						break
 					}
@@ -185,15 +185,6 @@ loop:
 		x[key] = value
 	}
 	return x, nil
-}
-
-// nextRegularToken return the next non-whitespace token
-func (p *Parser) nextRegularToken() token {
-	token := p.nextToken()
-	if token.typ == whitespaceType {
-		return p.nextToken()
-	}
-	return token
 }
 
 // nextToken returns the next token from the underlying scanner.

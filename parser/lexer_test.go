@@ -20,8 +20,8 @@ func TestSingleTokens(t *testing.T) {
 		{"-42", token{integerType, -42}},
 		{"{", token{bracketsOpenType, "{"}},
 		{"}", token{bracketsCloseType, "}"}},
-		{" ", token{whitespaceType, " "}},
-		{" 			 ", token{whitespaceType, " 			 "}},
+		{" ", token{eofType, ""}},
+		{" 			 ", token{eofType, ""}},
 		{"#", token{illegalType, "#"}},
 		// special words
 		{"yes", token{booleanType, true}},
@@ -47,15 +47,15 @@ func TestMultipleTokens(t *testing.T) {
 	}{
 		{
 			"hello world",
-			[]tokenType{identifierType, whitespaceType, identifierType},
+			[]tokenType{identifierType, identifierType},
 		},
 		{
 			"hello    	   world",
-			[]tokenType{identifierType, whitespaceType, identifierType},
+			[]tokenType{identifierType, identifierType},
 		},
 		{
 			"yes no hello",
-			[]tokenType{booleanType, whitespaceType, booleanType, whitespaceType, identifierType},
+			[]tokenType{booleanType, booleanType, identifierType},
 		},
 		{
 			"first=\"second 123 $%&\"",
