@@ -38,11 +38,9 @@ loop:
 			return nil, p.makeError("found %v, expected identifier or integer", tok)
 		}
 
-		// Next should be an equal sign
-		if tok := p.nextToken(); tok.typ == bracketsOpenType {
+		// Next is usually an equal sign, or we assume one
+		if tok := p.nextToken(); tok.typ != equalSignType {
 			p.backup(tok)
-		} else if tok.typ != equalSignType {
-			p.backup(tok) // if not equal sign, we assume there was one
 		}
 
 		// Next should be some kind of value
