@@ -73,6 +73,14 @@ func TestMultipleTokens(t *testing.T) {
 			"first=none",
 			[]tokenType{identifierType, equalSignType, identifierType},
 		},
+		{
+			"x={next_usable_date=\"-5070.07.21\"}",
+			[]tokenType{identifierType, equalSignType, bracketsOpenType, identifierType, equalSignType, stringType, bracketsCloseType},
+		},
+		{
+			"\"\" first=\"\"",
+			[]tokenType{stringType, identifierType, equalSignType, stringType},
+		},
 	}
 	for _, tc := range cases {
 		t.Run(fmt.Sprintf("in: %s", tc.in), func(t *testing.T) {

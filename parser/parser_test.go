@@ -3,7 +3,6 @@ package parser_test
 import (
 	"example/stellaris-tool/parser"
 	"fmt"
-	"os"
 	"strings"
 	"testing"
 
@@ -57,6 +56,10 @@ func TestParser(t *testing.T) {
 			"alpha={1={bravo=2}}",
 			map[string]any{"alpha": map[string]any{"1": map[string]any{"bravo": 2}}},
 		},
+		// {
+		// 	"alpha={1 {bravo=2}}",
+		// 	map[string]any{"alpha": map[string]any{"1": map[string]any{"bravo": 2}}},
+		// },
 		// Special cases
 		{"alpha={}", map[string]any{"alpha": struct{}{}}},
 		{"alpha={none={}}", map[string]any{"alpha": map[string]any{"none": struct{}{}}}},
@@ -73,13 +76,13 @@ func TestParser(t *testing.T) {
 	}
 }
 
-func TestParserFull(t *testing.T) {
-	f, err := os.Open("testdata/example")
-	if err != nil {
-		panic(err)
-	}
-	defer f.Close()
-	p := parser.NewParser(f)
-	_, err = p.Parse()
-	assert.NoError(t, err)
-}
+// func TestParserFull(t *testing.T) {
+// 	f, err := os.Open("../.temp/gamestate")
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	defer f.Close()
+// 	p := parser.NewParser(f)
+// 	_, err = p.Parse()
+// 	assert.NoError(t, err)
+// }

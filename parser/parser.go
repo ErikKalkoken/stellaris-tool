@@ -39,7 +39,9 @@ loop:
 		}
 
 		// Next should be an equal sign
-		if tok := p.nextToken(); tok.typ != equalSignType {
+		if tok := p.nextToken(); tok.typ == bracketsOpenType {
+			p.backup(tok)
+		} else if tok.typ != equalSignType {
 			return nil, p.makeError("found %v, expected equal sign", tok)
 		}
 
@@ -110,6 +112,9 @@ loop:
 						}
 						value = x
 						break
+					}
+					if tok3.typ == bracketsOpenType {
+						panic(p.makeError("Unexpected token: %v", tok3))
 					}
 				} else {
 					p.backup(tok2)
@@ -194,7 +199,9 @@ func (p *Parser) nextToken() token {
 		return token
 	}
 	// Otherwise read the next token from the scanner.
-	return p.lex.Lex()
+	token := p.lex.Lex()
+	// fmt.Println(token)
+	return token
 }
 
 // backup pushes the a token back onto the stack.

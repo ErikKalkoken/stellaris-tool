@@ -26,13 +26,14 @@ func (l *Lexer) Lex() token {
 	// Read the next rune.
 	for {
 		ch := l.read()
-
 		if unicode.IsSpace(ch) {
 			l.unread()
 			l.consumeWhitespace()
 			continue
 		}
-
+		if ch == '"' {
+			return l.scanString()
+		}
 		if unicode.IsLetter(ch) || unicode.IsDigit(ch) || ch == '-' {
 			l.unread()
 			return l.scanWord()
@@ -40,8 +41,6 @@ func (l *Lexer) Lex() token {
 		switch ch {
 		case eof:
 			return token{eofType, ""}
-		case '"':
-			return l.scanString()
 		case '{':
 			return token{bracketsOpenType, string(ch)}
 		case '}':
@@ -135,20 +134,16 @@ func (l *Lexer) scanWord() token {
 
 // scanWord identifies a string token.
 func (l *Lexer) scanString() token {
-	// Create a buffer and read the current character into it.
 	var buf bytes.Buffer
-	buf.WriteRune(l.read())
-
 	for {
-		if ch := l.read(); ch == eof {
+		ch := l.read()
+		if ch == eof || ch == '"' {
 			break
-		} else if ch == '"' {
-			break
-		} else {
-			_, _ = buf.WriteRune(ch)
 		}
+		_, _ = buf.WriteRune(ch)
 	}
-	return token{stringType, buf.String()}
+	s := buf.String()
+	return token{stringType, s}
 }
 
 // // scanNumber identifiers a number type token.
