@@ -3,6 +3,7 @@ package parser
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"io"
 	"strconv"
 	"unicode"
@@ -112,7 +113,7 @@ func (l *Lexer) scanWord() token {
 	if !hasLetter {
 		x1, err := strconv.ParseFloat(s, 64)
 		if err != nil {
-			panic(err)
+			panic(fmt.Sprintf("Failed to parse float in line %d: %v", l.loc, s))
 		}
 		x2 := int(x1)
 		if x1 == float64(x2) {

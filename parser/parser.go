@@ -42,7 +42,7 @@ loop:
 		if tok := p.nextToken(); tok.typ == bracketsOpenType {
 			p.backup(tok)
 		} else if tok.typ != equalSignType {
-			return nil, p.makeError("found %v, expected equal sign", tok)
+			p.backup(tok) // if not equal sign, we assume there was one
 		}
 
 		// Next should be some kind of value
@@ -74,10 +74,10 @@ loop:
 				value = oo
 			case identifierType, stringType:
 				tok3 := p.nextToken()
-				p.backup(tok3)
-				p.backup(tok2)
 				if tok3.typ == equalSignType {
 					// object
+					p.backup(tok3)
+					p.backup(tok2)
 					x, err := p.Parse()
 					if err != nil {
 						return nil, err
@@ -85,6 +85,8 @@ loop:
 					value = x
 				} else {
 					// Array of string
+					p.backup(tok3)
+					p.backup(tok2)
 					ss := make([]string, 0)
 					for {
 						tok3 := p.nextToken()
@@ -93,7 +95,7 @@ loop:
 						}
 						y, ok := tok3.value.(string)
 						if !ok {
-							return nil, p.makeError("Expected type string, but got: %v", tok3)
+							return nil, p.makeError("Expected type string for array, but got: %v", tok3)
 						}
 						ss = append(ss, y)
 					}
@@ -154,7 +156,7 @@ loop:
 						case integerType:
 							ii[i] = t.value.(int)
 						default:
-							return nil, p.makeError("Unexpected token for float array: %v", t)
+							return nil, p.makeError("Unexpected token type for float array: %v", t)
 						}
 					}
 					value = ii
@@ -170,7 +172,7 @@ loop:
 					}
 					y, ok := tok3.value.(bool)
 					if !ok {
-						return nil, p.makeError("Expected type boolean, but got: %v", tok3)
+						return nil, p.makeError("Expected type boolean for array, but got: %v", tok3)
 					}
 					ss = append(ss, y)
 				}

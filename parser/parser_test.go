@@ -14,6 +14,8 @@ func TestParser(t *testing.T) {
 		in   string
 		want map[string]any
 	}{
+		{"alpha={{bravo 42}}", map[string]any{"alpha": []map[string]any{{"bravo": 42}}}},
+
 		// simple values
 		{"alpha=5", map[string]any{"alpha": 5}},
 		{"alpha=5.3", map[string]any{"alpha": 5.3}},
@@ -49,20 +51,15 @@ func TestParser(t *testing.T) {
 				"1": map[string]any{"charlie": 7}},
 			},
 		},
-		// Special objects
+		// Special cases
+		{"alpha={}", map[string]any{"alpha": struct{}{}}},
+		{"alpha={none={}}", map[string]any{"alpha": map[string]any{"none": struct{}{}}}},
 		{"alpha={1=\"test\"}", map[string]any{"alpha": map[string]any{"1": "test"}}},
 		{"alpha={\"bravo\"=3}", map[string]any{"alpha": map[string]any{"bravo": 3}}},
 		{
 			"alpha={1={bravo=2}}",
 			map[string]any{"alpha": map[string]any{"1": map[string]any{"bravo": 2}}},
 		},
-		// {
-		// 	"alpha={1 {bravo=2}}",
-		// 	map[string]any{"alpha": map[string]any{"1": map[string]any{"bravo": 2}}},
-		// },
-		// Special cases
-		{"alpha={}", map[string]any{"alpha": struct{}{}}},
-		{"alpha={none={}}", map[string]any{"alpha": map[string]any{"none": struct{}{}}}},
 	}
 	for _, tc := range cases {
 		t.Run(fmt.Sprintf(tc.in), func(t *testing.T) {
