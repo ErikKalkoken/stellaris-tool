@@ -159,6 +159,22 @@ loop:
 					ss = append(ss, y)
 				}
 				value = ss
+			case booleanType:
+				// Array of boolean
+				p.backup(tok2)
+				ss := make([]bool, 0)
+				for {
+					tok3 := p.nextRegularToken()
+					if tok3.typ == bracketsCloseType {
+						break
+					}
+					y, ok := tok3.value.(bool)
+					if !ok {
+						return nil, p.makeError("Expected type boolean, but got: %v", tok3)
+					}
+					ss = append(ss, y)
+				}
+				value = ss
 			default:
 				return nil, p.makeError("invalid token %v for array", tok2)
 			}
