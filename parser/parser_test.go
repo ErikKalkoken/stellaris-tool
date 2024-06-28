@@ -38,6 +38,7 @@ func TestParser(t *testing.T) {
 		{"alpha={yes yes no no}", map[string]any{"alpha": []bool{true, true, false, false}}},
 		// Objects
 		{"alpha={bravo=3}", map[string]any{"alpha": map[string]any{"bravo": 3}}},
+		{"alpha={bravo=3 charlie=4}", map[string]any{"alpha": map[string]any{"bravo": 3, "charlie": 4}}},
 		{"alpha=5 bravo=6 charlie=7", map[string]any{"alpha": 5, "bravo": 6, "charlie": 7}},
 		{
 			"alpha={bravo=3 charlie=7}",
@@ -63,6 +64,15 @@ func TestParser(t *testing.T) {
 		{"alpha={{bravo 42}}", map[string]any{"alpha": []map[string]any{{"bravo": 42}}}},
 		// Date as value which is no string
 		{"alpha=2259.11.28", map[string]any{"alpha": "2259.11.28"}},
+		// Objects with same keys
+		{"alpha={bravo=3 bravo=4 bravo=9 bravo=1 bravo=2}",
+			map[string]any{"alpha": map[string]any{
+				"bravo_0": 3,
+				"bravo_1": 4,
+				"bravo_2": 9,
+				"bravo_3": 1,
+				"bravo_4": 2,
+			}}},
 	}
 	for _, tc := range cases {
 		t.Run(fmt.Sprintf(tc.in), func(t *testing.T) {

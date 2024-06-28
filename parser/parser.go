@@ -20,7 +20,7 @@ func NewParser(r io.Reader) *Parser {
 }
 func (p *Parser) Parse() (map[string]any, error) {
 	x := make(map[string]any)
-
+	keyDuplicates := map[string]int{}
 loop:
 	for {
 		var key string
@@ -165,10 +165,18 @@ loop:
 		default:
 			return nil, p.makeError("found %v, expected a value", tok)
 		}
-		// _, ok := x[key]
-		// if ok {
-		// 	return nil, p.makeError("key %s already exists in this map: %v", key, x)
-		// }
+		_, found := x[key]
+		if found {
+			keyDuplicates[key] = 0
+			newKey := fmt.Sprintf("%s_%d", key, 0)
+			x[newKey] = x[key]
+			delete(x, key)
+		}
+		_, found = keyDuplicates[key]
+		if found {
+			keyDuplicates[key]++
+			key = fmt.Sprintf("%s_%d", key, keyDuplicates[key])
+		}
 		x[key] = value
 	}
 	return x, nil
