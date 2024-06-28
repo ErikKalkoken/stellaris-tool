@@ -14,8 +14,6 @@ func TestParser(t *testing.T) {
 		in   string
 		want map[string]any
 	}{
-		{"alpha={{bravo 42}}", map[string]any{"alpha": []map[string]any{{"bravo": 42}}}},
-
 		// simple values
 		{"alpha=5", map[string]any{"alpha": 5}},
 		{"alpha=5.3", map[string]any{"alpha": 5.3}},
@@ -28,6 +26,7 @@ func TestParser(t *testing.T) {
 		// Array
 		{"alpha={5 6}", map[string]any{"alpha": []int{5, 6}}},
 		{"alpha={5.1 6.2}", map[string]any{"alpha": []float64{5.1, 6.2}}},
+		{"alpha={6.2 0}", map[string]any{"alpha": []float64{6.2, 0}}},
 		{"alpha={0 6.2}", map[string]any{"alpha": []float64{0, 6.2}}},
 		{"alpha={1 2}", map[string]any{"alpha": []int{1, 2}}},
 		{"alpha={\"first\" \"second\"}", map[string]any{"alpha": []string{"first", "second"}}},
@@ -60,6 +59,10 @@ func TestParser(t *testing.T) {
 			"alpha={1={bravo=2}}",
 			map[string]any{"alpha": map[string]any{"1": map[string]any{"bravo": 2}}},
 		},
+		// Array of objects without equal sign
+		{"alpha={{bravo 42}}", map[string]any{"alpha": []map[string]any{{"bravo": 42}}}},
+		// Date as value which is no string
+		{"alpha=2259.11.28", map[string]any{"alpha": "2259.11.28"}},
 	}
 	for _, tc := range cases {
 		t.Run(fmt.Sprintf(tc.in), func(t *testing.T) {

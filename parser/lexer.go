@@ -3,7 +3,6 @@ package parser
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"io"
 	"strconv"
 	"unicode"
@@ -112,14 +111,13 @@ func (l *Lexer) scanWord() token {
 	}
 	if !hasLetter {
 		x1, err := strconv.ParseFloat(s, 64)
-		if err != nil {
-			panic(fmt.Sprintf("Failed to parse float in line %d: %v", l.loc, s))
+		if err == nil { // if this was no float after we assume a string
+			x2 := int(x1)
+			if x1 == float64(x2) {
+				return token{integerType, x2}
+			}
+			return token{floatType, x1}
 		}
-		x2 := int(x1)
-		if x1 == float64(x2) {
-			return token{integerType, x2}
-		}
-		return token{floatType, x1}
 	}
 
 	// If the word matches a keyword then return that that token.
@@ -146,32 +144,3 @@ func (l *Lexer) scanString() token {
 	s := buf.String()
 	return token{stringType, s}
 }
-
-// // scanNumber identifiers a number type token.
-// func (l *Lexer) scanNumber() token {
-// 	// Create a buffer and read the current character into it.
-// 	var buf bytes.Buffer
-// 	buf.WriteRune(l.read())
-
-// 	for {
-// 		if ch := l.read(); ch == eof {
-// 			break
-// 		} else if !unicode.IsDigit(ch) && ch != '.' && ch != '-' {
-// 			l.unread()
-// 			break
-// 		} else {
-// 			_, _ = buf.WriteRune(ch)
-// 		}
-// 	}
-
-// 	s := buf.String()
-// 	x1, err := strconv.ParseFloat(s, 64)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// 	x2 := int(x1)
-// 	if x1 == float64(x2) {
-// 		return token{integerType, x2}
-// 	}
-// 	return token{floatType, x1}
-// }

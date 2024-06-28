@@ -98,3 +98,17 @@ func TestMultipleTokens(t *testing.T) {
 		})
 	}
 }
+
+func TestSpecialFeatures(t *testing.T) {
+	t.Run("can keep track of LOC", func(t *testing.T) {
+		in := strings.NewReader("alpha=1\nbravo=2")
+		s := NewLexer(in)
+		for {
+			token := s.Lex()
+			if token.typ == eofType {
+				break
+			}
+		}
+		assert.Equal(t, 2, s.loc)
+	})
+}
