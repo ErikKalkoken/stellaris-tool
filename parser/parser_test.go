@@ -12,79 +12,160 @@ import (
 func TestParser(t *testing.T) {
 	cases := []struct {
 		in   string
-		want map[string]any
+		want map[string][]any
 	}{
 		// Regular values
-		{"alpha=5", map[string]any{"alpha": 5}},
-		{"alpha=5.3", map[string]any{"alpha": 5.3}},
-		{"alpha=\"special text\"", map[string]any{"alpha": "special text"}},
-		{"alpha=yes", map[string]any{"alpha": true}},
-		{"alpha=no", map[string]any{"alpha": false}},
-		{"alpha=male", map[string]any{"alpha": "male"}},
+		{
+			"alpha=5",
+			map[string][]any{"alpha": {5}},
+		},
+		{
+			"alpha=5.3",
+			map[string][]any{"alpha": {5.3}},
+		},
+		{
+			"alpha=\"special text\"",
+			map[string][]any{"alpha": {"special text"}},
+		},
+		{
+			"alpha=yes",
+			map[string][]any{"alpha": {true}},
+		},
+		{
+			"alpha=no",
+			map[string][]any{"alpha": {false}},
+		},
+		{
+			"alpha=male",
+			map[string][]any{"alpha": {"male"}},
+		},
 		// Null values
-		{"alpha=none", map[string]any{"alpha": nil}},
-		{"alpha=not_set", map[string]any{"alpha": nil}},
+		{
+			"alpha=none",
+			map[string][]any{"alpha": {nil}},
+		},
+		{
+			"alpha=not_set",
+			map[string][]any{"alpha": {nil}},
+		},
 		// Array
-		{"alpha={5 6}", map[string]any{"alpha": []float64{5, 6}}},
-		{"alpha={5.1 6.2}", map[string]any{"alpha": []float64{5.1, 6.2}}},
-		{"alpha={6.2 0}", map[string]any{"alpha": []float64{6.2, 0}}},
-		{"alpha={0 6.2}", map[string]any{"alpha": []float64{0, 6.2}}},
-		{"alpha={\"first\" \"second\"}", map[string]any{"alpha": []string{"first", "second"}}},
-		{"alpha={bravo={1 2 3}}", map[string]any{"alpha": map[string]any{"bravo": []float64{1, 2, 3}}}},
+		{
+			"alpha={5 6}",
+			map[string][]any{"alpha": {[]float64{5, 6}}},
+		},
+		{
+			"alpha={5.1 6.2}",
+			map[string][]any{"alpha": {[]float64{5.1, 6.2}}},
+		},
+		{
+			"alpha={6.2 0}",
+			map[string][]any{"alpha": {[]float64{6.2, 0}}},
+		},
+		{
+			"alpha={0 6.2}",
+			map[string][]any{"alpha": {[]float64{0, 6.2}}},
+		},
+		{
+			"alpha={\"first\" \"second\"}",
+			map[string][]any{"alpha": {[]string{"first", "second"}}},
+		},
+		{
+			"alpha={bravo={1 2 3}}",
+			map[string][]any{"alpha": {map[string][]any{"bravo": {[]float64{1, 2, 3}}}}},
+		},
 		{
 			"alpha={{bravo=1}{bravo=2}}",
-			map[string]any{"alpha": []map[string]any{{"bravo": 1}, {"bravo": 2}}},
+			map[string][]any{"alpha": {[]map[string][]any{{"bravo": {1}}, {"bravo": {2}}}}},
 		},
-		{"alpha={yes yes no no}", map[string]any{"alpha": []bool{true, true, false, false}}},
+		{
+			"alpha={yes yes no no}",
+			map[string][]any{"alpha": {[]bool{true, true, false, false}}},
+		},
 		// Objects
-		{"alpha={bravo=3}", map[string]any{"alpha": map[string]any{"bravo": 3}}},
-		{"alpha={bravo=3 charlie=4}", map[string]any{"alpha": map[string]any{"bravo": 3, "charlie": 4}}},
-		{"alpha=5 bravo=6 charlie=7", map[string]any{"alpha": 5, "bravo": 6, "charlie": 7}},
+		{
+			"alpha={bravo=3}",
+			map[string][]any{"alpha": {map[string][]any{"bravo": {3}}}},
+		},
+		{
+			"alpha={bravo=3 charlie=4}",
+			map[string][]any{"alpha": {map[string][]any{"bravo": {3}, "charlie": {4}}}},
+		},
+		{
+			"alpha=5 bravo=6 charlie=7",
+			map[string][]any{"alpha": {5}, "bravo": {6}, "charlie": {7}},
+		},
 		{
 			"alpha={bravo=3 charlie=7}",
-			map[string]any{"alpha": map[string]any{"bravo": 3, "charlie": 7}},
+			map[string][]any{"alpha": {map[string][]any{"bravo": {3}, "charlie": {7}}}},
 		},
 		{
 			"alpha={0={bravo=1} 1={charlie=7}}",
-			map[string]any{"alpha": map[string]any{
-				"0": map[string]any{"bravo": 1},
-				"1": map[string]any{"charlie": 7}},
-			},
+			map[string][]any{"alpha": {
+				map[string][]any{
+					"0": {map[string][]any{"bravo": {1}}},
+					"1": {map[string][]any{"charlie": {7}}}},
+			}},
 		},
 		// Special cases
-		{"alpha={}", map[string]any{"alpha": struct{}{}}},
-		{"alpha={none={}}", map[string]any{"alpha": map[string]any{"none": struct{}{}}}},
-		{"alpha={1=\"test\"}", map[string]any{"alpha": map[string]any{"1": "test"}}},
-		{"alpha={\"bravo\"=3}", map[string]any{"alpha": map[string]any{"bravo": 3}}},
+		{
+			"alpha={}",
+			map[string][]any{"alpha": {}}},
+		{
+			"alpha={none={}}",
+			map[string][]any{"alpha": {map[string][]any{"none": {}}}},
+		},
+		{
+			"alpha={1=\"test\"}",
+			map[string][]any{"alpha": {map[string][]any{"1": {"test"}}}},
+		},
+		{
+			"alpha={\"bravo\"=3}",
+			map[string][]any{"alpha": {map[string][]any{"bravo": {3}}}},
+		},
 		{
 			"alpha={1={bravo=2}}",
-			map[string]any{"alpha": map[string]any{"1": map[string]any{"bravo": 2}}},
+			map[string][]any{"alpha": {
+				map[string][]any{"1": {map[string][]any{"bravo": {2}}}},
+			}},
 		},
 		// Array of objects without equal sign
-		{"alpha={{bravo 42}}", map[string]any{"alpha": []map[string]any{{"bravo": 42}}}},
+		{
+			"alpha={{bravo 42}}",
+			map[string][]any{"alpha": {[]map[string][]any{{"bravo": {42}}}}},
+		},
 		// Date as value which is no string
-		{"alpha=2259.11.28", map[string]any{"alpha": "2259.11.28"}},
+		{
+			"alpha=2259.11.28",
+			map[string][]any{"alpha": {"2259.11.28"}},
+		},
 		// Objects with same keys (one instance)
-		{"alpha={bravo=3 bravo=4 bravo=9 bravo=1 bravo=2}",
-			map[string]any{"alpha": map[string]any{
-				"bravo": []any{3, 4, 9, 1, 2},
-			}},
+		{
+			"alpha={bravo=3 bravo=4 bravo=9 bravo=1 bravo=2}",
+			map[string][]any{"alpha": {
+				map[string][]any{
+					"bravo": {3, 4, 9, 1, 2},
+				}},
+			},
 		},
 		// Objects with same keys (multiple instances)
-		{"alpha={bravo=3 charlie=1 bravo=4 charlie=2 bravo=9 charlie=3 bravo=1 charlie=4 bravo=2 charlie=5}",
-			map[string]any{"alpha": map[string]any{
-				"bravo":   []any{3, 4, 9, 1, 2},
-				"charlie": []any{1, 2, 3, 4, 5},
-			}},
+		{
+			"alpha={bravo=3 charlie=1 bravo=4 charlie=2 bravo=9 charlie=3 bravo=1 charlie=4 bravo=2 charlie=5}",
+			map[string][]any{"alpha": {
+				map[string][]any{
+					"bravo":   {3, 4, 9, 1, 2},
+					"charlie": {1, 2, 3, 4, 5},
+				}}},
 		},
 		// Objects with same keys (multiple instances) mixed with other k/v paris
-		{"alpha={bravo=3 charlie=1 bravo=4 charlie=2 bravo=9 charlie=3 bravo=1 charlie=4 bravo=2 charlie=5 delta=1}",
-			map[string]any{"alpha": map[string]any{
-				"bravo":   []any{3, 4, 9, 1, 2},
-				"charlie": []any{1, 2, 3, 4, 5},
-				"delta":   1,
+		{
+			"alpha={bravo=3 charlie=1 bravo=4 charlie=2 bravo=9 charlie=3 bravo=1 charlie=4 bravo=2 charlie=5 delta=1}",
+			map[string][]any{"alpha": {
+				map[string][]any{
+					"bravo":   {3, 4, 9, 1, 2},
+					"charlie": {1, 2, 3, 4, 5},
+					"delta":   {1},
+				}},
 			}},
-		},
 	}
 	for _, tc := range cases {
 		t.Run(fmt.Sprintf(tc.in), func(t *testing.T) {

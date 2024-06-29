@@ -10,19 +10,19 @@ import (
 
 var eof = rune(0)
 
-// Lexer represents a lexical scanner.
-type Lexer struct {
+// lexer represents a lexical scanner.
+type lexer struct {
 	r   *bufio.Reader
 	loc int
 }
 
-// NewLexer returns a new instance of lexer
-func NewLexer(r io.Reader) *Lexer {
-	return &Lexer{r: bufio.NewReader(r), loc: 1}
+// newLexer returns a new instance of lexer
+func newLexer(r io.Reader) *lexer {
+	return &lexer{r: bufio.NewReader(r), loc: 1}
 }
 
-// Lex returns the next token and literal value.
-func (l *Lexer) Lex() token {
+// lex returns the next token and literal value. This is the main method.
+func (l *lexer) lex() token {
 	// Read the next rune.
 	for {
 		ch := l.read()
@@ -54,7 +54,7 @@ func (l *Lexer) Lex() token {
 
 // read reads the next rune from the buffered reader.
 // Returns the rune(0) if an error occurs (or io.EOF is returned).
-func (l *Lexer) read() rune {
+func (l *lexer) read() rune {
 	ch, _, err := l.r.ReadRune()
 	if err != nil {
 		return eof
@@ -63,12 +63,12 @@ func (l *Lexer) read() rune {
 }
 
 // unread places the previously read rune back on the reader.
-func (l *Lexer) unread() {
+func (l *lexer) unread() {
 	_ = l.r.UnreadRune()
 }
 
 // consumeWhitespace consumes all whitespace from the reader.
-func (l *Lexer) consumeWhitespace() {
+func (l *lexer) consumeWhitespace() {
 	for {
 		ch := l.read()
 		if ch == eof {
@@ -84,8 +84,8 @@ func (l *Lexer) consumeWhitespace() {
 	}
 }
 
-// scanWord identifiers a word, which can be an identifier, a keyword or a number.
-func (l *Lexer) scanWord() token {
+// scanWord returns an identifier, a keyword or a number from the scanned input.
+func (l *lexer) scanWord() token {
 	var buf bytes.Buffer
 	buf.WriteRune(l.read())
 
@@ -131,8 +131,8 @@ func (l *Lexer) scanWord() token {
 	return token{identifier, s}
 }
 
-// scanWord identifies a string token.
-func (l *Lexer) scanString() token {
+// scanString returns a string token from the scanned input.
+func (l *lexer) scanString() token {
 	var buf bytes.Buffer
 	for {
 		ch := l.read()
