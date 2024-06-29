@@ -4,6 +4,11 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+	"strings"
+)
+
+const (
+	duplicateKeyPrefix = "DUPLICATE_KEY_"
 )
 
 // Parser represents a parser.
@@ -20,7 +25,7 @@ func NewParser(r io.Reader) *Parser {
 }
 func (p *Parser) Parse() (map[string]any, error) {
 	x := make(map[string]any)
-	keyDuplicates := map[string]int{}
+	duplicateKeys := map[string]int{}
 loop:
 	for {
 		var key string
@@ -165,21 +170,58 @@ loop:
 		default:
 			return nil, p.makeError("found %v, expected a value", tok)
 		}
+		// handle duplicate keys part 1 (when a new k/v pair is added)
 		_, found := x[key]
 		if found {
-			keyDuplicates[key] = 0
-			newKey := fmt.Sprintf("%s_%d", key, 0)
+			duplicateKeys[key] = 0
+			newKey := makeKeyWithSuffix(key, 0)
 			x[newKey] = x[key]
 			delete(x, key)
 		}
-		_, found = keyDuplicates[key]
+		_, found = duplicateKeys[key]
 		if found {
-			keyDuplicates[key]++
-			key = fmt.Sprintf("%s_%d", key, keyDuplicates[key])
+			duplicateKeys[key]++
+			key = makeKeyWithSuffix(key, duplicateKeys[key])
+		}
+		// handle duplicate keys part 2 (when we have all duplicate k/v pairs)
+		m, ok := value.(map[string]any)
+		if ok {
+			duplicates := make(map[string]map[int]any)
+			for k, v := range m {
+				k2, found := strings.CutPrefix(k, duplicateKeyPrefix)
+				if found {
+					p := strings.SplitN(k2, "_", 2)
+					if len(p) != 2 {
+						return nil, fmt.Errorf("duplicate key has unexpected format: %s", k2)
+					}
+					k3 := p[1]
+					id, err := strconv.Atoi(p[0])
+					if err != nil {
+						return nil, fmt.Errorf("failed to convert duplicate key ID: %s", k2)
+					}
+					_, found := duplicates[k3]
+					if !found {
+						duplicates[k3] = make(map[int]any)
+					}
+					duplicates[k3][id] = v
+					delete(m, k)
+				}
+			}
+			for k, m2 := range duplicates {
+				a := make([]any, len(m2))
+				for id, v := range m2 {
+					a[id] = v
+				}
+				m[k] = a
+			}
 		}
 		x[key] = value
 	}
 	return x, nil
+}
+
+func makeKeyWithSuffix(key string, id int) string {
+	return fmt.Sprintf("%s%d_%s", duplicateKeyPrefix, id, key)
 }
 
 // nextToken returns the next token from the underlying scanner.

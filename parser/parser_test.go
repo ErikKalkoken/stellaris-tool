@@ -64,15 +64,27 @@ func TestParser(t *testing.T) {
 		{"alpha={{bravo 42}}", map[string]any{"alpha": []map[string]any{{"bravo": 42}}}},
 		// Date as value which is no string
 		{"alpha=2259.11.28", map[string]any{"alpha": "2259.11.28"}},
-		// Objects with same keys
+		// Objects with same keys (one instance)
 		{"alpha={bravo=3 bravo=4 bravo=9 bravo=1 bravo=2}",
 			map[string]any{"alpha": map[string]any{
-				"bravo_0": 3,
-				"bravo_1": 4,
-				"bravo_2": 9,
-				"bravo_3": 1,
-				"bravo_4": 2,
-			}}},
+				"bravo": []any{3, 4, 9, 1, 2},
+			}},
+		},
+		// Objects with same keys (multiple instances)
+		{"alpha={bravo=3 charlie=1 bravo=4 charlie=2 bravo=9 charlie=3 bravo=1 charlie=4 bravo=2 charlie=5}",
+			map[string]any{"alpha": map[string]any{
+				"bravo":   []any{3, 4, 9, 1, 2},
+				"charlie": []any{1, 2, 3, 4, 5},
+			}},
+		},
+		// Objects with same keys (multiple instances) mixed with other k/v paris
+		{"alpha={bravo=3 charlie=1 bravo=4 charlie=2 bravo=9 charlie=3 bravo=1 charlie=4 bravo=2 charlie=5 delta=1}",
+			map[string]any{"alpha": map[string]any{
+				"bravo":   []any{3, 4, 9, 1, 2},
+				"charlie": []any{1, 2, 3, 4, 5},
+				"delta":   1,
+			}},
+		},
 	}
 	for _, tc := range cases {
 		t.Run(fmt.Sprintf(tc.in), func(t *testing.T) {
