@@ -55,4 +55,12 @@ func TestStack(t *testing.T) {
 		_, err = s.pop()
 		assert.ErrorIs(t, err, errStackEmpty)
 	})
+	t.Run("should panic if trying to init with invalid size", func(t *testing.T) {
+		assert.Panics(t, func() {
+			newStack[int](0)
+		})
+		assert.Panics(t, func() {
+			newStack[int](-1)
+		})
+	})
 }

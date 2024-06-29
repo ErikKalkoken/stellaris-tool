@@ -7,7 +7,7 @@ import (
 
 var errStackEmpty = errors.New("stack is empty")
 
-// stack is a generic stack with limited size
+// stack represents a generic stack with limited size.
 type stack[T any] struct {
 	l    []T
 	size int
