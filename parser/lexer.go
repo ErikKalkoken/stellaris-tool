@@ -25,7 +25,10 @@ func newLexer(r io.Reader) *lexer {
 func (l *lexer) lex() (token, error) {
 	// Read the next rune.
 	for {
-		ch := l.read()
+		ch, err := l.read()
+		if err != nil {
+			return token{}, err
+		}
 		if unicode.IsSpace(ch) {
 			l.unread()
 			l.consumeWhitespace()
@@ -52,14 +55,15 @@ func (l *lexer) lex() (token, error) {
 	}
 }
 
-// read reads the next rune from the buffered reader.
-// Returns the rune(0) if an error occurs (or io.EOF is returned).
-func (l *lexer) read() rune {
+// read reads and returns the next rune from the buffered reader or the EOF rune.
+func (l *lexer) read() (rune, error) {
 	ch, _, err := l.r.ReadRune()
-	if err != nil {
-		return eof
+	if err == io.EOF {
+		return eof, nil
+	} else if err != nil {
+		return 0, err
 	}
-	return ch
+	return ch, nil
 }
 
 // unread places the previously read rune back on the reader.
@@ -71,9 +75,12 @@ func (l *lexer) unread() error {
 }
 
 // consumeWhitespace consumes all whitespace from the reader.
-func (l *lexer) consumeWhitespace() {
+func (l *lexer) consumeWhitespace() error {
 	for {
-		ch := l.read()
+		ch, err := l.read()
+		if err != nil {
+			return err
+		}
 		if ch == eof {
 			break
 		}
@@ -85,18 +92,27 @@ func (l *lexer) consumeWhitespace() {
 			l.loc++
 		}
 	}
+	return nil
 }
 
 // scanWord returns an identifier, a keyword or a number from the scanned input.
 func (l *lexer) scanWord() (token, error) {
 	var buf bytes.Buffer
-	_, err := buf.WriteRune(l.read())
+	ch, err := l.read()
+	if err != nil {
+		return token{}, err
+	}
+	_, err = buf.WriteRune(ch)
 	if err != nil {
 		return token{}, err
 	}
 	// Read word from stream into a buffer
 	for {
-		if ch := l.read(); ch == eof {
+		ch, err := l.read()
+		if err != nil {
+			return token{}, err
+		}
+		if ch == eof {
 			break
 		} else if !unicode.IsLetter(ch) && !unicode.IsDigit(ch) && ch != '_' && ch != '-' && ch != '.' {
 			l.unread()
@@ -143,11 +159,14 @@ func (l *lexer) scanWord() (token, error) {
 func (l *lexer) scanString() (token, error) {
 	var buf bytes.Buffer
 	for {
-		ch := l.read()
+		ch, err := l.read()
+		if err != nil {
+			return token{}, err
+		}
 		if ch == eof || ch == '"' {
 			break
 		}
-		_, err := buf.WriteRune(ch)
+		_, err = buf.WriteRune(ch)
 		if err != nil {
 			return token{}, err
 		}

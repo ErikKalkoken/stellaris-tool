@@ -160,7 +160,7 @@ loop:
 						break
 					}
 					if tok3.typ == bracketsOpen {
-						panic(p.makeError("unexpected token: %v", tok3))
+						return nil, p.makeError("unexpected token: %v", tok3)
 					}
 				} else {
 					p.backup(tok2)
