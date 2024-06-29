@@ -22,7 +22,7 @@ func newLexer(r io.Reader) *lexer {
 }
 
 // lex returns the next token and literal value. This is the main method.
-func (l *lexer) lex() token {
+func (l *lexer) lex() (token, error) {
 	// Read the next rune.
 	for {
 		ch := l.read()
@@ -40,15 +40,15 @@ func (l *lexer) lex() token {
 		}
 		switch ch {
 		case eof:
-			return token{endOfFile, ""}
+			return token{endOfFile, ""}, nil
 		case '{':
-			return token{bracketsOpen, string(ch)}
+			return token{bracketsOpen, string(ch)}, nil
 		case '}':
-			return token{bracketsClose, string(ch)}
+			return token{bracketsClose, string(ch)}, nil
 		case '=':
-			return token{equalSign, string(ch)}
+			return token{equalSign, string(ch)}, nil
 		}
-		return token{illegal, string(ch)}
+		return token{illegal, string(ch)}, nil
 	}
 }
 
@@ -63,8 +63,11 @@ func (l *lexer) read() rune {
 }
 
 // unread places the previously read rune back on the reader.
-func (l *lexer) unread() {
-	_ = l.r.UnreadRune()
+func (l *lexer) unread() error {
+	if err := l.r.UnreadRune(); err != nil {
+		return err
+	}
+	return nil
 }
 
 // consumeWhitespace consumes all whitespace from the reader.
@@ -85,11 +88,13 @@ func (l *lexer) consumeWhitespace() {
 }
 
 // scanWord returns an identifier, a keyword or a number from the scanned input.
-func (l *lexer) scanWord() token {
+func (l *lexer) scanWord() (token, error) {
 	var buf bytes.Buffer
-	buf.WriteRune(l.read())
-
-	// Read word from stream
+	_, err := buf.WriteRune(l.read())
+	if err != nil {
+		return token{}, err
+	}
+	// Read word from stream into a buffer
 	for {
 		if ch := l.read(); ch == eof {
 			break
@@ -97,10 +102,13 @@ func (l *lexer) scanWord() token {
 			l.unread()
 			break
 		} else {
-			_, _ = buf.WriteRune(ch)
+			_, err := buf.WriteRune(ch)
+			if err != nil {
+				return token{}, err
+			}
 		}
 	}
-
+	// parse the string
 	s := buf.String()
 	hasLetter := false
 	for _, x := range s {
@@ -111,36 +119,39 @@ func (l *lexer) scanWord() token {
 	}
 	if !hasLetter {
 		x1, err := strconv.ParseFloat(s, 64)
-		if err == nil { // if this was no float after we assume a string
+		if err == nil { // if this was actually no float we assume it's a string (e.g. could be a date)
 			x2 := int(x1)
 			if x1 == float64(x2) {
-				return token{integer, x2}
+				return token{integer, x2}, nil
 			}
-			return token{float, x1}
+			return token{float, x1}, nil
 		}
 	}
 
 	// If the word matches a keyword then return that that token.
 	switch s {
 	case "yes":
-		return token{boolean, true}
+		return token{boolean, true}, nil
 	case "no":
-		return token{boolean, false}
+		return token{boolean, false}, nil
 	}
 	// Otherwise return as a identifier.
-	return token{identifier, s}
+	return token{identifier, s}, nil
 }
 
 // scanString returns a string token from the scanned input.
-func (l *lexer) scanString() token {
+func (l *lexer) scanString() (token, error) {
 	var buf bytes.Buffer
 	for {
 		ch := l.read()
 		if ch == eof || ch == '"' {
 			break
 		}
-		_, _ = buf.WriteRune(ch)
+		_, err := buf.WriteRune(ch)
+		if err != nil {
+			return token{}, err
+		}
 	}
 	s := buf.String()
-	return token{str, s}
+	return token{str, s}, nil
 }

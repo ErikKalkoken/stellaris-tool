@@ -34,7 +34,7 @@ func TestSingleTokens(t *testing.T) {
 		t.Run(fmt.Sprintf("in: %s", tc.in), func(t *testing.T) {
 			in := strings.NewReader(tc.in)
 			l := newLexer(in)
-			got := l.lex()
+			got, _ := l.lex()
 			assert.Equal(t, tc.want, got)
 		})
 	}
@@ -88,7 +88,7 @@ func TestMultipleTokens(t *testing.T) {
 			s := newLexer(in)
 			got := make([]tokenType, 0)
 			for {
-				token := s.lex()
+				token, _ := s.lex()
 				if token.typ == endOfFile {
 					break
 				}
@@ -104,7 +104,7 @@ func TestSpecialFeatures(t *testing.T) {
 		in := strings.NewReader("alpha=1\nbravo=2")
 		s := newLexer(in)
 		for {
-			token := s.lex()
+			token, _ := s.lex()
 			if token.typ == endOfFile {
 				break
 			}

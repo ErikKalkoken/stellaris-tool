@@ -199,7 +199,7 @@ func (p *Parser) nextToken() token {
 		return token
 	}
 	// Otherwise read the next token from the scanner.
-	token := p.lex.lex()
+	token, _ := p.lex.lex()
 	// fmt.Println(token)
 	return token
 }
