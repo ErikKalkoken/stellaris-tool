@@ -40,7 +40,11 @@ loop:
 		var value any
 
 		// First token should some kind of key or signaling the end of the current nesting level
-		switch tok := p.nextToken(); tok.typ {
+		tok, err := p.nextToken()
+		if err != nil {
+			return nil, err
+		}
+		switch tok.typ {
 		case endOfFile, bracketsClose:
 			break loop
 		case identifier, str:
@@ -52,12 +56,20 @@ loop:
 		}
 
 		// Next is usually an equal sign. If it is omitted we assume there is one.
-		if tok := p.nextToken(); tok.typ != equalSign {
+		tok, err = p.nextToken()
+		if err != nil {
+			return nil, err
+		}
+		if tok.typ != equalSign {
 			p.backup(tok)
 		}
 
 		// Next should be some kind of value
-		switch tok := p.nextToken(); tok.typ {
+		tok, err = p.nextToken()
+		if err != nil {
+			return nil, err
+		}
+		switch tok.typ {
 		case str, float, integer, boolean:
 			value = tok.value
 		case identifier:
@@ -67,7 +79,10 @@ loop:
 				value = tok.value
 			}
 		case bracketsOpen:
-			tok2 := p.nextToken()
+			tok2, err := p.nextToken()
+			if err != nil {
+				return nil, err
+			}
 			switch tok2.typ {
 			case bracketsClose:
 				// Empty object
@@ -81,7 +96,10 @@ loop:
 						return nil, err
 					}
 					oo = append(oo, v2)
-					tok3 := p.nextToken()
+					tok3, err := p.nextToken()
+					if err != nil {
+						return nil, err
+					}
 					if tok3.typ == bracketsClose {
 						break
 					} else if tok3.typ != bracketsOpen {
@@ -90,7 +108,10 @@ loop:
 				}
 				value = oo
 			case identifier, str:
-				tok3 := p.nextToken()
+				tok3, err := p.nextToken()
+				if err != nil {
+					return nil, err
+				}
 				if tok3.typ == equalSign {
 					// A regular object
 					p.backup(tok3)
@@ -106,7 +127,10 @@ loop:
 					p.backup(tok2)
 					ss := make([]string, 0)
 					for {
-						tok3 := p.nextToken()
+						tok3, err := p.nextToken()
+						if err != nil {
+							return nil, err
+						}
 						if tok3.typ == bracketsClose {
 							break
 						}
@@ -120,7 +144,10 @@ loop:
 				}
 			case integer, float:
 				if tok2.typ == integer {
-					tok3 := p.nextToken()
+					tok3, err := p.nextToken()
+					if err != nil {
+						return nil, err
+					}
 					p.backup(tok3)
 					p.backup(tok2)
 					if tok3.typ == equalSign {
@@ -141,7 +168,10 @@ loop:
 				// Array of numbers
 				ff := make([]float64, 0)
 				for {
-					tok3 := p.nextToken()
+					tok3, err := p.nextToken()
+					if err != nil {
+						return nil, err
+					}
 					if tok3.typ == bracketsClose {
 						break
 					}
@@ -160,7 +190,10 @@ loop:
 				p.backup(tok2)
 				ss := make([]bool, 0)
 				for {
-					tok3 := p.nextToken()
+					tok3, err := p.nextToken()
+					if err != nil {
+						return nil, err
+					}
 					if tok3.typ == bracketsClose {
 						break
 					}
@@ -189,19 +222,21 @@ loop:
 
 // nextToken returns the next token from the underlying scanner.
 // If a token has been unscanned then read that instead.
-func (p *Parser) nextToken() token {
+func (p *Parser) nextToken() (token, error) {
 	// If we have a token on the buffer, then return it.
 	if !p.ts.isEmpty() {
-		token, err := p.ts.pop()
+		tok, err := p.ts.pop()
 		if err != nil {
-			panic(err)
+			return token{}, nil
 		}
-		return token
+		return tok, nil
 	}
 	// Otherwise read the next token from the scanner.
-	token, _ := p.lex.lex()
-	// fmt.Println(token)
-	return token
+	tok, err := p.lex.lex()
+	if err != nil {
+		return token{}, nil
+	}
+	return tok, nil
 }
 
 // backup pushes the a token back onto the stack.
