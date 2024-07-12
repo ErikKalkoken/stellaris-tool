@@ -1,4 +1,4 @@
-module example/stellaris-tool
+module github.com/ErikKalkoken/stellaris-tool
 
 go 1.22.4
 

@@ -1,10 +1,11 @@
 package parser_test
 
 import (
-	"example/stellaris-tool/internal/parser"
 	"fmt"
 	"strings"
 	"testing"
+
+	"github.com/ErikKalkoken/stellaris-tool/internal/parser"
 
 	"github.com/stretchr/testify/assert"
 )
