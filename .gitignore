@@ -2,3 +2,5 @@
 .vscode/
 *.json
 sav2json
+gamestate
+meta
