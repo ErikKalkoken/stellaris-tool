@@ -9,5 +9,5 @@ This is a converter for Stellaris save files. It converts them into JSON, so tha
 If you system has a go compiler you can install the tool with:
 
 ```sh
-go install install github.com/ErikKalkoken/stellaris-tool/cmd/pdx2json@latest
+go install github.com/ErikKalkoken/stellaris-tool/cmd/pdx2json@latest
 ```
