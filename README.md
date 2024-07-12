@@ -1,7 +1,3 @@
 # Stellaris Tool
 
-## Parser
-
-This is general parser for Paradox save files. It is mostly tested with Stellaris, but should work with save files from other Paradox games too.
-
-Note that the parser returns a map of slices. This is because the Paradox format allows multiple values for the same key.
+This is a converter for Stellaris save files. It converts them into JSON, so that they can be processed with other tools.

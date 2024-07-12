@@ -1,7 +1,7 @@
 package parser_test
 
 import (
-	"example/stellaris-tool/parser"
+	"example/stellaris-tool/internal/parser"
 	"fmt"
 	"strings"
 	"testing"
