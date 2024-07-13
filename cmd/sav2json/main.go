@@ -3,25 +3,34 @@ package main
 import (
 	"archive/zip"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/ErikKalkoken/stellaris-tool/internal/parser"
 )
 
 func main() {
 	flag.Usage = myUsage
-	destPtr := flag.String("d", ".", "destination path for output file")
-	rawPrt := flag.Bool("k", false, "keep raw data files")
+	destPtr := flag.String("d", ".", "destination directory for output files")
+	keepPtr := flag.Bool("k", false, "keep original data files")
+	samePtr := flag.Bool("s", false, "create output files in same directory as source files")
 	flag.Parse()
 	if len(os.Args) < 2 {
 		flag.Usage()
 		os.Exit(1)
 	}
 	source := flag.Arg(0)
-	if err := processSaveFile(source, *destPtr, *rawPrt); err != nil {
+	var dest string
+	if *samePtr {
+		dest = filepath.Dir(source)
+	} else {
+		dest = *destPtr
+	}
+	if err := processSaveFile(source, dest, *keepPtr); err != nil {
 		fmt.Printf("ERROR: %s\n", err)
 		os.Exit(1)
 	}
@@ -33,11 +42,13 @@ func processSaveFile(source string, dest string, keepDataFiles bool) error {
 		return err
 	}
 	defer r.Close()
+	var hasErrors bool
 	fmt.Printf("Processing save file: %s\n", source)
 	for _, f := range r.File {
 		if keepDataFiles {
 			if err := writeData(dest, f); err != nil {
 				fmt.Printf("ERROR: Failed to write data file for %s: %s\n", f.Name, err)
+				hasErrors = true
 				continue
 			}
 
@@ -45,12 +56,17 @@ func processSaveFile(source string, dest string, keepDataFiles bool) error {
 		data, err := parseFile(f)
 		if err != nil {
 			fmt.Printf("ERROR: Failed to parse %s: %s\n", f.Name, err)
+			hasErrors = true
 			continue
 		}
 		if err := writeJson(dest, f.Name, data); err != nil {
 			fmt.Printf("ERROR: Failed to write JSON for %s: %s\n", f.Name, err)
+			hasErrors = true
 			continue
 		}
+	}
+	if hasErrors {
+		return errors.New("processing failed with errors")
 	}
 	return nil
 }
@@ -70,15 +86,15 @@ func parseFile(f *zip.File) (map[string][]any, error) {
 	return data, nil
 }
 
-func writeData(path string, f *zip.File) error {
+func writeData(dir string, f *zip.File) error {
 	r, err := f.Open()
 	if err != nil {
 		return err
 	}
 	defer r.Close()
-	fmt.Printf("Writing data file: %s\n", f.Name)
-	name := fmt.Sprintf("%s/%s", path, f.Name)
-	w, err := os.Create(name)
+	p := fmt.Sprintf("%s/%s", dir, f.Name)
+	fmt.Printf("Writing data file: %s\n", p)
+	w, err := os.Create(p)
 	if err != nil {
 		return err
 	}
@@ -87,20 +103,23 @@ func writeData(path string, f *zip.File) error {
 	return err
 }
 
-func writeJson(path string, name string, data map[string][]any) error {
+func writeJson(dir string, name string, data map[string][]any) error {
 	y, err := json.MarshalIndent(data, "", "    ")
 	if err != nil {
 		return err
 	}
-	fn := fmt.Sprintf("%s/%s.json", path, name)
-	fmt.Printf("Writing JSON: %s\n", fn)
-	if err := os.WriteFile(fn, y, 0644); err != nil {
+	p := fmt.Sprintf("%s/%s.json", dir, name)
+	fmt.Printf("Writing JSON: %s\n", p)
+	if err := os.WriteFile(p, y, 0644); err != nil {
 		return err
 	}
 	return nil
 }
 
 func myUsage() {
-	fmt.Fprintf(flag.CommandLine.Output(), "Usage: sav2json [options] <inputfile>:\nOptions:\n")
+	s := "Usage: sav2json [options] <inputfile>:\n\n" +
+		"sav2json converts a Stellaris save game into JSON.\n\n" +
+		"Options:\n"
+	fmt.Fprint(flag.CommandLine.Output(), s)
 	flag.PrintDefaults()
 }
