@@ -8,3 +8,4 @@ __debug_*
 *.zip
 *.tar.gz
 *.exe
+build/

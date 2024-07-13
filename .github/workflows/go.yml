@@ -45,22 +45,29 @@ jobs:
         sudo apt-get update
         sudo apt-get install zip gzip tar
 
-    - name: Build Linux
-      run: go build ./cmd/sav2json
+    - name: Build linux
+      run: GOOS=linux GOARCH=amd64 go build ./build/linux/ ./cmd/sav2json
 
-    - name: Package Linux
-      run: tar -czvf ${{ env.PREFIX }}-linux-x64.tar.gz sav2json
+    - name: Package linux
+      run: tar -czvf ${{ env.PREFIX }}-linux-amd64.tar.gz ./build/linux/sav2json
 
-    - name: Build Windows
-      run: GOOS=windows GOARCH=amd64 go build ./cmd/sav2json
+    - name: Build windows
+      run: GOOS=windows GOARCH=amd64 go build -o ./build/windows/ ./cmd/sav2json
 
-    - name: Package Windows
-      run: zip ${{ env.PREFIX }}-windows-x64.zip sav2json.exe
+    - name: Package windows
+      run: zip ${{ env.PREFIX }}-windows-amd64.zip ./build/windows/sav2json.exe
+
+    - name: Build darwin
+      run: GOOS=darwin GOARCH=amd64 go build ./build/darwin/ ./cmd/sav2json
+
+    - name: Package darwin
+      run: zip ${{ env.PREFIX }}-darwin-amd64.zip ./build/darwin/sav2json
 
     - name: Create release
       uses: softprops/action-gh-release@v2
       with:
         fail_on_unmatched_files: true
         files: |
-          ${{ env.PREFIX }}-windows-x64.zip
-          ${{ env.PREFIX }}-linux-x64.tar.gz
+          ${{ env.PREFIX }}-darwin-amd64.zip
+          ${{ env.PREFIX }}-linux-amd64.tar.gz
+          ${{ env.PREFIX }}-windows-amd64.zip
