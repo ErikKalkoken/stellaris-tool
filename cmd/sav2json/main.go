@@ -13,24 +13,31 @@ import (
 	"github.com/ErikKalkoken/stellaris-tool/internal/parser"
 )
 
+var Version = "?"
+
 func main() {
 	flag.Usage = myUsage
-	destPtr := flag.String("d", ".", "destination directory for output files")
-	keepPtr := flag.Bool("k", false, "keep original data files")
-	samePtr := flag.Bool("s", false, "create output files in same directory as source files")
+	destFlag := flag.String("d", ".", "destination directory for output files")
+	keepFlag := flag.Bool("k", false, "keep original data files")
+	sameFlag := flag.Bool("s", false, "create output files in same directory as source files")
+	versionFlag := flag.Bool("v", false, "show the current version")
 	flag.Parse()
+	if *versionFlag {
+		fmt.Printf("sav2json %s\n", Version)
+		os.Exit(0)
+	}
 	if len(os.Args) < 2 {
 		flag.Usage()
 		os.Exit(1)
 	}
 	source := flag.Arg(0)
 	var dest string
-	if *samePtr {
+	if *sameFlag {
 		dest = filepath.Dir(source)
 	} else {
-		dest = *destPtr
+		dest = *destFlag
 	}
-	if err := processSaveFile(source, dest, *keepPtr); err != nil {
+	if err := processSaveFile(source, dest, *keepFlag); err != nil {
 		fmt.Printf("ERROR: %s\n", err)
 		os.Exit(1)
 	}

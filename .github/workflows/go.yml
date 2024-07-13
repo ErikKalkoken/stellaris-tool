@@ -46,19 +46,19 @@ jobs:
         sudo apt-get install zip gzip tar
 
     - name: Build linux
-      run: GOOS=linux GOARCH=amd64 go build -o ./build/linux/ ./cmd/sav2json
+      run: GOOS=linux GOARCH=amd64 go build -ldflags "-X main.Version=${{  github.ref_name }}" -o ./build/linux/ ./cmd/sav2json
 
     - name: Package linux
       run: tar --directory=build/linux -czvf ${{ env.PREFIX }}-linux-amd64.tar.gz sav2json
 
     - name: Build windows
-      run: GOOS=windows GOARCH=amd64 go build -o ./build/windows/ ./cmd/sav2json
+      run: GOOS=windows GOARCH=amd64 go build -ldflags "-X main.Version=${{  github.ref_name }}" -o ./build/windows/ ./cmd/sav2json
 
     - name: Package windows
       run: zip -j ${{ env.PREFIX }}-windows-amd64.zip ./build/windows/sav2json.exe
 
     - name: Build darwin
-      run: GOOS=darwin GOARCH=amd64 go build -o ./build/darwin/ ./cmd/sav2json
+      run: GOOS=darwin GOARCH=amd64 go build -ldflags "-X main.Version=${{  github.ref_name }}" -o ./build/darwin/ ./cmd/sav2json
 
     - name: Package darwin
       run: zip -j ${{ env.PREFIX }}-darwin-amd64.zip ./build/darwin/sav2json
