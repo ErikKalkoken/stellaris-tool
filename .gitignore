@@ -1,6 +1,6 @@
 .temp/
 .vscode/
 *.json
-sav2json
+/sav2json
 gamestate
 meta

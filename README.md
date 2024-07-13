@@ -10,7 +10,7 @@ This package contains the tool `sav2json` which can convert Stellaris save files
 
 ## Installation
 
-If you system has a go compiler you can install the tool with:
+If you system has a go compiler you can install the tool directly with:
 
 ```sh
 go install github.com/ErikKalkoken/stellaris-tool/cmd/sav2json@latest
