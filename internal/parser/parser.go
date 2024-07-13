@@ -29,8 +29,8 @@ func NewParser(r io.Reader) *Parser {
 // - All keys are converted to strings, including keywords and numbers
 // - The keywords "none" and "not_set" are converted to nil (when used as values)
 // - The keywords "yes" and "no" are converted to bool
-// - An array of strings or boolean will be returned as string or bool slices respectively
-// - An array of numbers will be returns as a float64 slice
+// - All numbers are converted to float64
+// - Arrays will be returned as slices
 // - Arrays can also be empty
 func (p *Parser) Parse() (map[string][]any, error) {
 	result := make(map[string][]any)

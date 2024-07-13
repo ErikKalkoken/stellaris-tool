@@ -31,6 +31,8 @@ func TestSingleTokens(t *testing.T) {
 		{"indeterminable", token{identifier, "indeterminable"}},
 		{`"one \"two\" three"`, token{str, "one \"two\" three"}},
 		{`"one \\ two"`, token{str, "one \\ two"}},
+		{"one:two", token{identifier, "one:two"}},
+		{"@one", token{identifier, "@one"}},
 	}
 	for _, tc := range cases {
 		t.Run(fmt.Sprintf("in: %s", tc.in), func(t *testing.T) {

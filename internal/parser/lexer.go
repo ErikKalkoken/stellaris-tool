@@ -37,7 +37,7 @@ func (l *lexer) lex() (token, error) {
 		if ch == '"' {
 			return l.scanString()
 		}
-		if unicode.IsLetter(ch) || unicode.IsDigit(ch) || ch == '-' {
+		if unicode.IsLetter(ch) || unicode.IsDigit(ch) || ch == '-' || ch == '@' {
 			l.unread()
 			return l.scanWord()
 		}
@@ -114,7 +114,7 @@ func (l *lexer) scanWord() (token, error) {
 		}
 		if ch == eof {
 			break
-		} else if !unicode.IsLetter(ch) && !unicode.IsDigit(ch) && ch != '_' && ch != '-' && ch != '.' {
+		} else if !unicode.IsLetter(ch) && !unicode.IsDigit(ch) && ch != '_' && ch != '-' && ch != '.' && ch != ':' {
 			l.unread()
 			break
 		} else {
