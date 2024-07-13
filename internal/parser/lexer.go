@@ -158,18 +158,27 @@ func (l *lexer) scanWord() (token, error) {
 // scanString returns a string token from the scanned input.
 func (l *lexer) scanString() (token, error) {
 	var buf bytes.Buffer
+	var escape bool
 	for {
 		ch, err := l.read()
 		if err != nil {
 			return token{}, err
 		}
-		if ch == eof || ch == '"' {
+		if ch == eof {
+			break
+		}
+		if !escape && ch == '\\' {
+			escape = true
+			continue
+		}
+		if !escape && ch == '"' {
 			break
 		}
 		_, err = buf.WriteRune(ch)
 		if err != nil {
 			return token{}, err
 		}
+		escape = false
 	}
 	s := buf.String()
 	return token{str, s}, nil
