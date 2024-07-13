@@ -13,6 +13,7 @@ import (
 	"github.com/ErikKalkoken/stellaris-tool/internal/parser"
 )
 
+// Current version need to be injected via ldflags
 var Version = "?"
 
 func main() {
@@ -43,6 +44,18 @@ func main() {
 	}
 }
 
+// myUsage writes a custom usage message to configured output stream.
+func myUsage() {
+	s := "Usage: sav2json [options] <inputfile>:\n\n" +
+		"A tool for converting Stellaris save games into JSON.\n" +
+		"For more information please see: https://github.com/ErikKalkoken/stellaris-tool\n\n" +
+		"Options:\n"
+	fmt.Fprint(flag.CommandLine.Output(), s)
+	flag.PrintDefaults()
+}
+
+// processSaveFile writes the contents of a Stellaris safe game file in JSON format to disk.
+// It will optionally also write the raw data files to disk, when keepDataFiles is true.
 func processSaveFile(source string, dest string, keepDataFiles bool) error {
 	r, err := zip.OpenReader(source)
 	if err != nil {
@@ -66,7 +79,7 @@ func processSaveFile(source string, dest string, keepDataFiles bool) error {
 			hasErrors = true
 			continue
 		}
-		if err := writeJson(dest, f.Name, data); err != nil {
+		if err := writeJSON(dest, f.Name, data); err != nil {
 			fmt.Printf("ERROR: Failed to write JSON for %s: %s\n", f.Name, err)
 			hasErrors = true
 			continue
@@ -78,6 +91,7 @@ func processSaveFile(source string, dest string, keepDataFiles bool) error {
 	return nil
 }
 
+// parseFile parses a zip file and returns it's contents.
 func parseFile(f *zip.File) (map[string][]any, error) {
 	r, err := f.Open()
 	if err != nil {
@@ -93,6 +107,7 @@ func parseFile(f *zip.File) (map[string][]any, error) {
 	return data, nil
 }
 
+// writeData writes a a zip file raw to disk.
 func writeData(dir string, f *zip.File) error {
 	r, err := f.Open()
 	if err != nil {
@@ -110,7 +125,8 @@ func writeData(dir string, f *zip.File) error {
 	return err
 }
 
-func writeJson(dir string, name string, data map[string][]any) error {
+// writeJSON writes the given data to disk.
+func writeJSON(dir string, name string, data map[string][]any) error {
 	y, err := json.MarshalIndent(data, "", "    ")
 	if err != nil {
 		return err
@@ -121,12 +137,4 @@ func writeJson(dir string, name string, data map[string][]any) error {
 		return err
 	}
 	return nil
-}
-
-func myUsage() {
-	s := "Usage: sav2json [options] <inputfile>:\n\n" +
-		"sav2json converts a Stellaris save game into JSON.\n\n" +
-		"Options:\n"
-	fmt.Fprint(flag.CommandLine.Output(), s)
-	flag.PrintDefaults()
 }
