@@ -1,28 +1,65 @@
-# This workflow will build a golang project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+# Main workflow for testing and releasing
 
-name: Go
+name: CI/CD
 
-on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+env:
+  GOVERSION: "1.22.4"
+  NAME: "sav2json"
+  PREFIX: "sav2json-${{  github.ref_name }}"
+
+on: push
 
 jobs:
 
-  build:
+  test:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
 
     - name: Set up Go
-      uses: actions/setup-go@v4
+      uses: actions/setup-go@v5
       with:
-        go-version: '1.22'
+        go-version: ${{ env.GOVERSION }}
 
     - name: Build
       run: go build -v ./...
 
     - name: Test
       run: go test -v ./...
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GOVERSION }}
+
+    - name: Install tools
+      run: |
+        sudo apt-get update
+        sudo apt-get install zip gzip tar
+
+    - name: Build Linux
+      run: go build ./cmd/sav2json
+
+    - name: Package Linux
+      run: tar -czvf ${{ env.PREFIX }}-linux-x64.tar.gz sav2json
+
+    - name: Build Windows
+      run: GOOS=windows GOARCH=amd64 go build ./cmd/sav2json
+
+    - name: Package Windows
+      run: zip ${{ env.PREFIX }}-windows-x64.zip sav2json.exe
+
+    - name: Create release
+      uses: softprops/action-gh-release@v2
+      with:
+        fail_on_unmatched_files: true
+        files: |
+          ${{ env.PREFIX }}-windows-x64.zip
+          ${{ env.PREFIX }}-linux-x64.tar.gz

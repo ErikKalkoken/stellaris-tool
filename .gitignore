@@ -5,3 +5,6 @@
 gamestate
 meta
 __debug_*
+*.zip
+*.tar.gz
+*.exe
