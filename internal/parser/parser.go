@@ -70,8 +70,10 @@ loop:
 			return nil, err
 		}
 		switch tok.typ {
-		case str, float, integer, boolean:
+		case str, float, boolean:
 			value = tok.value
+		case integer:
+			value = float64(tok.value.(int))
 		case identifier:
 			if tok.value == "none" || tok.value == "not_set" {
 				value = nil

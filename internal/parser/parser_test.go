@@ -18,7 +18,7 @@ func TestParser(t *testing.T) {
 		// Regular values
 		{
 			"alpha=5",
-			map[string][]any{"alpha": {5}},
+			map[string][]any{"alpha": {5.0}},
 		},
 		{
 			"alpha=5.3",
@@ -76,7 +76,7 @@ func TestParser(t *testing.T) {
 		},
 		{
 			"alpha={{bravo=1}{bravo=2}}",
-			map[string][]any{"alpha": {[]map[string][]any{{"bravo": {1}}, {"bravo": {2}}}}},
+			map[string][]any{"alpha": {[]map[string][]any{{"bravo": {1.0}}, {"bravo": {2.0}}}}},
 		},
 		{
 			"alpha={yes yes no no}",
@@ -85,26 +85,26 @@ func TestParser(t *testing.T) {
 		// Objects
 		{
 			"alpha={bravo=3}",
-			map[string][]any{"alpha": {map[string][]any{"bravo": {3}}}},
+			map[string][]any{"alpha": {map[string][]any{"bravo": {3.0}}}},
 		},
 		{
 			"alpha={bravo=3 charlie=4}",
-			map[string][]any{"alpha": {map[string][]any{"bravo": {3}, "charlie": {4}}}},
+			map[string][]any{"alpha": {map[string][]any{"bravo": {3.0}, "charlie": {4.0}}}},
 		},
 		{
 			"alpha=5 bravo=6 charlie=7",
-			map[string][]any{"alpha": {5}, "bravo": {6}, "charlie": {7}},
+			map[string][]any{"alpha": {5.0}, "bravo": {6.0}, "charlie": {7.0}},
 		},
 		{
 			"alpha={bravo=3 charlie=7}",
-			map[string][]any{"alpha": {map[string][]any{"bravo": {3}, "charlie": {7}}}},
+			map[string][]any{"alpha": {map[string][]any{"bravo": {3.0}, "charlie": {7.0}}}},
 		},
 		{
 			"alpha={0={bravo=1} 1={charlie=7}}",
 			map[string][]any{"alpha": {
 				map[string][]any{
-					"0": {map[string][]any{"bravo": {1}}},
-					"1": {map[string][]any{"charlie": {7}}}},
+					"0": {map[string][]any{"bravo": {1.0}}},
+					"1": {map[string][]any{"charlie": {7.0}}}},
 			}},
 		},
 		// Special cases
@@ -121,18 +121,18 @@ func TestParser(t *testing.T) {
 		},
 		{
 			"alpha={\"bravo\"=3}",
-			map[string][]any{"alpha": {map[string][]any{"bravo": {3}}}},
+			map[string][]any{"alpha": {map[string][]any{"bravo": {3.0}}}},
 		},
 		{
 			"alpha={1={bravo=2}}",
 			map[string][]any{"alpha": {
-				map[string][]any{"1": {map[string][]any{"bravo": {2}}}},
+				map[string][]any{"1": {map[string][]any{"bravo": {2.0}}}},
 			}},
 		},
 		// Array of objects without equal sign
 		{
 			"alpha={{bravo 42}}",
-			map[string][]any{"alpha": {[]map[string][]any{{"bravo": {42}}}}},
+			map[string][]any{"alpha": {[]map[string][]any{{"bravo": {42.0}}}}},
 		},
 		// Date as value which is no string
 		{
@@ -144,7 +144,7 @@ func TestParser(t *testing.T) {
 			"alpha={bravo=3 bravo=4 bravo=9 bravo=1 bravo=2}",
 			map[string][]any{"alpha": {
 				map[string][]any{
-					"bravo": {3, 4, 9, 1, 2},
+					"bravo": {3.0, 4.0, 9.0, 1.0, 2.0},
 				}},
 			},
 		},
@@ -153,8 +153,8 @@ func TestParser(t *testing.T) {
 			"alpha={bravo=3 charlie=1 bravo=4 charlie=2 bravo=9 charlie=3 bravo=1 charlie=4 bravo=2 charlie=5}",
 			map[string][]any{"alpha": {
 				map[string][]any{
-					"bravo":   {3, 4, 9, 1, 2},
-					"charlie": {1, 2, 3, 4, 5},
+					"bravo":   {3.0, 4.0, 9.0, 1.0, 2.0},
+					"charlie": {1.0, 2.0, 3.0, 4.0, 5.0},
 				}}},
 		},
 		// Objects with same keys (multiple instances) mixed with other k/v paris
@@ -162,9 +162,9 @@ func TestParser(t *testing.T) {
 			"alpha={bravo=3 charlie=1 bravo=4 charlie=2 bravo=9 charlie=3 bravo=1 charlie=4 bravo=2 charlie=5 delta=1}",
 			map[string][]any{"alpha": {
 				map[string][]any{
-					"bravo":   {3, 4, 9, 1, 2},
-					"charlie": {1, 2, 3, 4, 5},
-					"delta":   {1},
+					"bravo":   {3.0, 4.0, 9.0, 1.0, 2.0},
+					"charlie": {1.0, 2.0, 3.0, 4.0, 5.0},
+					"delta":   {1.0},
 				}},
 			}},
 	}
